@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Everest</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<!-- NAVBAR --> 
+<div class="navbar" id="navbar">
+  <h2 class="logo" id="navLogo">Everest</h2>
+  <div class="top-icons" id="navIcons">
+    <i class="fa-solid fa-magnifying-glass" id="searchIcon"></i>
+    <i class="fa-solid fa-bell" id="notificationIcon"></i>
+    <i class="fa-solid fa-message" id="messageIcon"></i>
+    <i class="fa-solid fa-bars menu-icon" id="menuBtn"></i>
+  </div>
+</div>
+
+<!-- ✅ BOTTOM NAV (example id) -->
+<div id="bottomNav"></div>
+
+<!-- ✅ FULL SCREEN SEARCH OVERLAY -->
+<div class="search-overlay" id="searchOverlay" aria-hidden="true">
+  <div class="search-topbar">
+    <button class="app-back-btn" id="searchBackBtn" aria-label="Back">
+      <i class="fa-solid fa-chevron-left"></i>
+    </button>
+    <div class="search-input-wrap">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input id="searchInput" type="text" placeholder="Search Everest" autocomplete="off" />
+      <button class="search-clear" id="searchClearBtn" aria-label="Clear">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  </div>
+  <div class="search-results" id="searchResultsList"></div>
+</div>
+
+<!-- MENU BAR -->
+<div class="menu-bar" id="bottomNav">
+  <i class="fa-solid fa-house menu-icon active" id="homeIcon"></i>
+<div class="menu-icon" id="reelsIcon">
+  <svg viewBox="0 0 24 24" width="26" height="26"
+       fill="none"
+       stroke="currentColor"
+       stroke-width="2"
+       stroke-linecap="round"
+       stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+    <line x1="3" y1="8" x2="21" y2="8"></line>
+    <line x1="8" y1="3" x2="12" y2="8"></line>
+    <line x1="14" y1="3" x2="18" y2="8"></line>
+  <path d="M9 9.9 L17 13.4 L9 16.9 Z"
+      fill="currentColor"
+      stroke="none"/>
+  </svg>
+</div>
+
+
+
+<!-- PLUS ICON (after reels) -->
+<div class="menu-icon plus-wrap" id="plusWrap">
+  <i class="fa-solid fa-plus" id="plusIcon"></i>
+  <!-- dropdown -->
+  <div class="plus-menu" id="plusMenu">
+    <div class="pmx-item" data-act="text">
+      <i class="fa-solid fa-pen-to-square"></i>
+      <span>Text post</span>
+    </div>
+    <div class="pmx-item" data-act="media">
+      <i class="fa-regular fa-image"></i>
+      <span>Media post</span>
+    </div>
+    <div class="pmx-item" data-act="reels">
+      <i class="fa-solid fa-clapperboard"></i>
+      <span>Reels</span>
+    </div>
+    <div class="pmx-item" data-act="story">
+      <i class="fa-solid fa-circle-plus"></i>
+      <span>Story</span>
+    </div>
+    <div class="pmx-item" data-act="ai">
+  <i class="fa-solid fa-bolt"></i>
+  <span>AI</span>
+</div>
+  </div>
+</div>
+  <i class="fa-solid fa-user-group menu-icon" id="friendIcon"></i>
+  <i class="fa-solid fa-user menu-icon" id="profileIcon"></i>
+</div>
+
+
+
+<!--upload post-->
+<div id="uploadIndicator" class="upload-indicator" style="display:none;">
+  <div class="spinner"></div>
+  <div class="txt">Uploading...</div>
+</div>
+
+<!--rels-->
+<div id="reelsPage">
+  <!-- ✅ Reels Header -->
+  <div class="reels-header">
+    <div class="reels-back" id="reelsBackBtn">
+      <i class="fa-solid fa-arrow-left"></i>
+    </div>
+    <div class="reels-title">Reels</div>
+  </div>
+  <div id="reelsWrap" class="reels-wrap"></div>
+</div>
+
+
+<!-- ===== FRIENDS PAGE ===== -->
+<div id="friendsPage" class="page" style="display:none;">
+  <div class="friends-topbar">
+   <button id="friendsBackBtn" class="fbtn" aria-label="Back">
+  <i class="fa-solid fa-chevron-left"></i>
+</button>
+    <div class="friends-title">Friends</div>
+    <button id="friendsSearchBtn" class="fbtn" aria-label="Search">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+  </div>
+  <div class="friends-tabs">
+    <button class="ftab active" data-tab="followers">followers</button>
+    <button class="ftab" data-tab="following">following</button>
+  </div>
+  <div id="friendsList" class="friends-list"></div>
+</div>
+
+
+  <!-- Drawer Overlay -->
+<div id="drawerOverlay" class="drawer-overlay"></div>
+<!-- Left Drawer -->
+<aside id="leftDrawer" class="left-drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div class="drawer-user">
+      <img class="drawer-avatar" id="drawerAvatar" src="https://i.imgur.com/6VBx3io.png" alt="">
+      <div class="drawer-user-meta">
+        <div class="drawer-name-row">
+          <div class="drawer-name" id="drawerName">Your Name</div>
+          <span id="drawerVerifiedBadge"
+                class="verified-badge"
+                data-verified-uid=""
+                title="Verified"
+                style="display:none;">
+            <svg class="verified-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 2l2.09 2.09 2.96-.39 1.2 2.73 2.73 1.2-.39 2.96L22 12l-2.09 2.09.39 2.96-2.73 1.2-1.2 2.73-2.96-.39L12 22l-2.09-2.09-2.96.39-1.2-2.73-2.73-1.2.39-2.96L2 12l2.09-2.09-.39-2.96 2.73-1.2 1.2-2.73 2.96.39L12 2z"
+                fill="#ff1f1f" />
+              <path
+                d="M9.3 12.6l1.9 1.9 4.2-4.3"
+                fill="none"
+                stroke="#ffffff"
+                stroke-width="2.6"
+                stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </span>
+        </div>
+        <div class="drawer-meta">
+          <span><strong id="drawerFollowing">0</strong> Following</span>
+          <span> • </span>
+          <span><strong id="drawerFollowers">0</strong> Followers</span>
+        </div>
+      </div>
+    </div>
+    <button id="drawerCloseBtn" class="drawer-close" aria-label="Close">✕</button>
+  </div>
+  <nav class="drawer-links">
+    <a href="#" id="menuProfile"><i class="fa-solid fa-user"></i> Profile</a>
+    <a href="#" id="changeNameBtn"><i class="fa-solid fa-pen"></i> Change name</a>
+    <a href="#" id="signupBtn"><i class="fa-solid fa-user-plus"></i> Signup</a>
+    <a href="#" id="settingsBtn"><i class="fa-solid fa-gear"></i> Settings</a>
+    <a href="#" id="loginMenuBtn"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+    <a class="logo-item">
+      <img src="ChatGPT Image Jan 19, 2026, 07_18_08 PM.png" alt="MAS">
+    </a>
+  </nav>
+</aside>
+
+<!-- NOTIFICATION PAGE -->
+<div id="notificationPage" style="display:none;">
+  <div class="notification-header">
+    <h2>Notifications</h2>
+    <i class="fa-solid fa-magnifying-glass" id="notifSearch"></i>
+  </div>
+    <div class="notification-item">
+      <strong>Everest</strong> started following you
+    </div>
+  </div>
+
+<!-- MESSAGE PAGE -->
+<div id="messagePage" style="display:none;">
+  <div class="message-header">
+    <div class="message-top">
+      <h2>E-text</h2>
+      <button class="menu-btn" type="button" aria-label="Menu">
+        ☰
+      </button>
+    </div>
+    <input class="message-search" placeholder="Search messages..." />
+  </div>
+  <div class="message-list">
+  </div>
+</div>
+
+<!-- chat box -->
+<div id="chatThreadPage" class="mchat" style="display:none;">
+  <!-- TOP BAR -->
+  <div class="mchat-top">
+    <button id="chatBackBtn" class="mchat-back" type="button">
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <div class="mchat-user">
+      <img id="chatHeadAvatar" class="mchat-avatar" src="https://i.imgur.com/6VBx3io.png" />
+      <div class="mchat-user-meta">
+        <div class="mchat-name-line">
+          <span id="chatHeadName" class="mchat-name"></span>
+          <!-- TOP VERIFIED BADGE -->
+          <span id="chatHeadVerified"
+                class="verified-badge"
+                style="display:none;"
+                title="Verified">
+            <svg class="verified-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2l2.09 2.09 2.96-.39 1.2 2.73 2.73 1.2-.39 2.96L22 12l-2.09 2.09.39 2.96-2.73 1.2-1.2 2.73-2.96-.39L12 22l-2.09-2.09-2.96.39-1.2-2.73-2.73-1.2.39-2.96L2 12l2.09-2.09-.39-2.96 2.73-1.2 1.2-2.73 2.96.39L12 2z" fill="#ff1f1f"/>
+              <path d="M9.3 12.6l1.9 1.9 4.2-4.3" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+        <div class="mchat-sub">Active now</div>
+      </div>
+    </div>
+    <div class="mchat-actions">
+      <button class="mchat-ico mchat-ico--red" type="button" aria-label="Call">
+  <svg class="mchat-svg" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.07 21 3 13.93 3 5c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.24.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" fill="currentColor"/>
+  </svg>
+</button>
+     <button class="mchat-ico video-btn" type="button" title="Video call">
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="#ff1f1f">
+    <path d="M17 10.5V6c0-1.1-.9-2-2-2H5C3.9 4 3 4.9 3 6v12c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4.5l4 4V6.5l-4 4z"/>
+  </svg>
+</button>
+      <button class="mchat-ico" type="button">⋮</button>
+    </div>
+  </div>
+
+  <!-- MESSAGES AREA -->
+  <div id="chatMessages" class="mchat-body">
+    <!-- First open profile intro -->
+    <div id="chatIntro" class="mchat-intro">
+      <img id="chatIntroAvatar" class="mchat-intro-avatar" src="https://i.imgur.com/6VBx3io.png">
+      <div class="mchat-intro-name-line">
+        <div id="chatIntroName" class="mchat-intro-name">User</div>
+
+        <!-- INTRO VERIFIED BADGE -->
+        <span id="chatIntroVerified"
+              class="verified-badge"
+              style="display:none;"
+              title="Verified">
+          <svg class="verified-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2l2.09 2.09 2.96-.39 1.2 2.73 2.73 1.2-.39 2.96L22 12l-2.09 2.09.39 2.96-2.73 1.2-1.2 2.73-2.96-.39L12 22l-2.09-2.09-2.96.39-1.2-2.73-2.73-1.2.39-2.96L2 12l2.09-2.09-.39-2.96 2.73-1.2 1.2-2.73 2.96.39L12 2z" fill="#ff1f1f"/>
+            <path d="M9.3 12.6l1.9 1.9 4.2-4.3" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </div>
+      <button class="mchat-view-profile" type="button">View profile</button>
+      <div class="mchat-privacy">
+        This conversation is fully private and secure.
+        Only the participants in this chat have access to the messages and calls.
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT BAR -->
+  <div class="mchat-inputbar">
+   <button class="mchat-ico camera-btn" type="button" title="Camera">
+  <svg viewBox="0 0 24 24" width="26" height="26" fill="#ff1f1f">
+    <path d="M20 5h-3.17l-1.84-2H9.01L7.17 5H4c-1.1 0-2 .9-2 2v11c0 
+    1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-8 
+    13a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z"/>
+   </svg>
+</button>  
+<button class="mchat-ico gallery-btn" type="button" title="Gallery">
+  <svg viewBox="0 0 24 24" width="26" height="26" fill="#ff1f1f">
+    <path d="M21 19V5c0-1.1-.9-2-2-2H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 11.5l2.5 3.01L14.5 10l4.5 6H5l3.5-4.5zM8 8a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/>
+  </svg>
+</button>
+    <button class="mchat-ico voice-btn" type="button" title="Voice">
+  <svg viewBox="0 0 24 24" width="26" height="26" fill="#ff1f1f">
+    <path d="M12 14c1.66 0 3-1.34 3-3V6a3 3 0 10-6 0v5c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+  </svg>
+</button>
+    <input id="chatInput" class="mchat-input" placeholder="write text...">
+    <button id="chatSendBtn" class="mchat-send">➤</button>
+  </div>
+</div>
+
+<!-- language/dark mode -->
+<!-- SETTINGS PAGE -->
+<div id="settingsPage" class="settings-page" style="display:none;">
+
+  <div class="settings-header">
+    <i class="fa-solid fa-arrow-left settings-back" id="settingsBackBtn"></i>
+    <h2 id="settingsTitle">Settings</h2>
+  </div>
+
+  <div class="settings-list">
+
+    <!-- Language -->
+    <div class="settings-item" id="languageItem">
+      <div class="si-left">
+        <i class="fa-solid fa-language"></i>
+        <span id="settingsLanguageText">Language</span>
+      </div>
+      <span class="si-right" id="currentLanguage">&gt;</span>
+    </div>
+
+    <!-- Dark Mode -->
+    <div class="settings-item">
+      <div class="si-left">
+        <i class="fa-solid fa-moon"></i>
+        <span id="settingsDarkModeText">Dark Mode</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="darkModeToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Personal Details -->
+    <div class="settings-item">
+      <div class="si-left">
+        <i class="fa-solid fa-user"></i>
+        <span id="settingsPersonalDetailsText">Personal Details</span>
+      </div>
+    </div>
+
+    <!-- Change Password -->
+    <div class="settings-item">
+      <div class="si-left">
+        <i class="fa-solid fa-key"></i>
+        <span id="settingsChangePasswordText">Change Password</span>
+      </div>
+    </div>
+
+    <!-- Get Verified -->
+    <div class="settings-item">
+      <div class="si-left">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="settingsGetVerifiedText">Get Verified</span>
+      </div>
+    </div>
+
+    <!-- Privacy -->
+    <div class="settings-item" id="privacyBtn">
+      <div class="si-left">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span id="settingsPrivacyText">Privacy Policy</span>
+      </div>
+    </div>
+
+    <!-- Help -->
+    <div class="settings-item">
+      <div class="si-left">
+        <i class="fa-solid fa-circle-info"></i>
+        <span id="settingsHelpText">Help and support</span>
+      </div>
+    </div>
+
+    <!-- About -->
+    <div class="settings-item" id="aboutBtn">
+      <div class="si-left">
+        <span class="custom-icon">E</span>
+        <span id="settingsAboutText">About</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LANGUAGE PAGE -->
+<div id="languagePage" class="language-page" style="display:none;">
+
+  <div class="language-header">
+    <i class="fa-solid fa-arrow-left" id="languageBack"></i>
+    <h2 id="langPageTitle">Change Language</h2>
+  </div>
+
+  <div class="language-list">
+
+    <div class="language-item">
+      <div class="lang-left">
+        <span id="langEnglishText">English</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="englishToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="language-item">
+      <div class="lang-left">
+        <span id="langBanglaText">Bangla</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="banglaToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+  </div>
+</div>
+
+<!-- PRIVACY PAGE -->
+<div id="privacyPage" class="privacy-page" style="display:none;">
+
+  <div class="privacy-header">
+    <i class="fa-solid fa-arrow-left" id="privacyBack"></i>
+    <h2 id="privacyTitle">Privacy Policy</h2>
+  </div>
+
+  <div class="privacy-content">
+    <p id="privacyIntro">
+      Welcome to Everest. Your privacy is important to us. This Privacy Policy explains how Everest collects, uses, and protects your information when you use our platform.
+    </p>
+
+    <h3 id="privacyH1">1. Information We Collect</h3>
+    <p id="privacyP1">When you use Everest, we may collect the following information:</p>
+    <ul>
+      <li id="privacyLi1">Personal information such as your name, email address, and profile details.</li>
+      <li id="privacyLi2">Content you create such as posts, comments, photos, and messages.</li>
+      <li id="privacyLi3">Device and usage information including browser type, IP address, and activity on the platform.</li>
+    </ul>
+
+    <h3 id="privacyH2">2. How We Use Your Information</h3>
+    <ul>
+      <li id="privacyLi4">Provide and improve Everest services.</li>
+      <li id="privacyLi5">Allow you to create posts and interact with users.</li>
+      <li id="privacyLi6">Keep the platform safe and prevent spam.</li>
+      <li id="privacyLi7">Improve user experience.</li>
+    </ul>
+
+    <h3 id="privacyH3">3. Data Protection</h3>
+    <p id="privacyP2">
+      Everest takes appropriate security measures to protect your personal information from unauthorized access, misuse, or loss. We use modern security practices and restricted access systems to safeguard user data. However, because the internet is not completely secure, we cannot guarantee absolute protection of all information.
+    </p>
+
+    <h3 id="privacyH4">4. Sharing Information</h3>
+    <p id="privacyP3">
+      Everest does not sell or trade your personal data to third parties. Information may only be shared when necessary to operate the platform, comply with legal obligations, or protect the safety and rights of our users and services.
+    </p>
+
+    <h3 id="privacyH5">5. User Control</h3>
+    <ul>
+      <li id="privacyLi8">Edit your personal information.</li>
+      <li id="privacyLi9">Delete posts or content.</li>
+      <li id="privacyLi10">Request account deletion.</li>
+    </ul>
+
+    <h3 id="privacyH6">6. Cookies</h3>
+    <p id="privacyP4">
+      Everest may use cookies to enhance site performance, remember user preferences, and improve the overall browsing experience. Disabling cookies may limit certain features of the platform.
+    </p>
+
+    <h3 id="privacyH7">7. Changes to Privacy Policy</h3>
+    <p id="privacyP5">
+      We may update this Privacy Policy occasionally to reflect improvements or legal requirements. The updated version will always be published on this page with the latest revision date.
+    </p>
+
+    <h3 id="privacyH8">8. Contact Us</h3>
+    <p id="privacyP6">
+      If you have any questions or concerns about this Privacy Policy, you can contact us through the Everest support system within the platform.
+    </p>
+  </div>
+</div>
+
+<!-- ABOUT PAGE -->
+<div id="aboutPage" class="about-page" style="display:none;">
+
+  <div class="about-header">
+    <i class="fa-solid fa-arrow-left" id="aboutBack"></i>
+    <h2 id="aboutTitle">About – Everest</h2>
+  </div>
+
+  <div class="about-content">
+
+    <h3 id="aboutH1">Welcome to Everest</h3>
+
+    <p id="aboutP1">
+      Everest is a modern and innovative social networking platform created to bring people closer together in the digital world. It is a place where users can connect, communicate, share ideas, and express themselves freely. Everest is designed to make online interaction simple, enjoyable, and meaningful for everyone.
+    </p>
+
+    <h3 id="aboutH2">1. Our Platform</h3>
+
+    <p id="aboutP2">
+      Everest allows users to create their own profiles and build their online identity. On the platform, people can share posts, upload photos and videos, and interact with others through likes, comments, and shares.
+    </p>
+
+    <p id="aboutP3">
+      The platform is built to make communication easy and engaging so that users can stay connected with friends, family, and new people from around the world.
+    </p>
+
+    <h3 id="aboutH3">2. Our Mission</h3>
+
+    <p id="aboutP4">
+      Our mission is to connect people from different cultures, places, and backgrounds through one simple platform. Everest aims to create a friendly and welcoming online space where everyone can share their thoughts, experiences, creativity, and moments without barriers.
+    </p>
+
+    <h3 id="aboutH4">3. What You Can Do</h3>
+
+    <ul>
+      <li id="aboutLi1">Creating and sharing posts with the community</li>
+      <li id="aboutLi2">Uploading photos and videos</li>
+      <li id="aboutLi3">Following friends and discovering new people</li>
+      <li id="aboutLi4">Liking, commenting, and sharing content</li>
+      <li id="aboutLi5">Expressing thoughts, ideas, and daily moments</li>
+    </ul>
+
+    <h3 id="aboutH5">4. Community</h3>
+
+    <p id="aboutP5">
+      Everest focuses on building a positive and respectful online community. The platform encourages users to communicate kindly, support each other, and share meaningful content.
+    </p>
+
+    <h3 id="aboutH6">5. Our Vision</h3>
+
+    <p id="aboutP6">
+      Our vision is to grow Everest into a global social networking platform where people from every corner of the world can easily connect, communicate, and share their stories.
+    </p>
+
+    <h3 id="aboutH7">6. Our Goal</h3>
+
+    <p id="aboutP7">
+      Our goal is to build a simple, fast, and user-friendly social media platform that anyone can use easily.
+    </p>
+
+  </div>
+</div>
+<!-- HOME PAGE -->
+<div id="homePage">
+
+  <!-- TEXT POST MODAL -->
+  <div id="textPostModal" class="auth-modal">
+    <div class="auth-box">
+      <h3>Create post</h3>
+      <textarea id="textPostInput" placeholder="What's on your mind?"></textarea>
+      <button id="textPostBtn">Post</button>
+    </div>
+  </div>
+
+  <!-- MEDIA INPUT (for dropdown media post) -->
+  <input type="file" id="imageInput" accept="image/*,video/*" hidden>
+
+  <!-- FEED -->
+  <div id="feed"></div>
+
+</div>
+<!-- PROFILE PAGE -->
+<div id="profilePage">
+<input type="file" id="profileInput" accept="image/*" hidden>
+<input type="file" id="coverInput" accept="image/*" hidden>
+  <!-- COVER -->
+  <div class="cover-wrapper">
+    <img id="coverPic" src="https://i.imgur.com/9QZ7R0B.jpg">
+    <i class="fa-solid fa-camera" id="coverCam"></i>
+  </div>
+  <!-- PROFILE PIC -->
+  <div class="profile-pic-wrapper">
+    <img id="profilePicBig" src="https://i.imgur.com/6VBx3io.png">
+    <i class="fa-solid fa-camera" id="profileCam"></i>
+  </div>
+
+ 
+  <!-- NAME + VERIFIED -->
+<div class="profile-name-row">
+  <h3 id="profileName">Your Name</h3>
+  <span id="profileVerifiedBadge"
+        class="verified-badge"
+        data-verified-uid=""
+        title="Verified"
+        style="display:none;">
+    <svg class="verified-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M12 2l2.09 2.09 2.96-.39 1.2 2.73 2.73 1.2-.39 2.96L22 12l-2.09 2.09.39 2.96-2.73 1.2-1.2 2.73-2.96-.39L12 22l-2.09-2.09-2.96.39-1.2-2.73-2.73-1.2.39-2.96L2 12l2.09-2.09-.39-2.96 2.73-1.2 1.2-2.73 2.96.39L12 2z"
+        fill="#ff1f1f" />
+      <path
+        d="M9.3 12.6l1.9 1.9 4.2-4.3"
+        fill="none"
+        stroke="#ffffff"
+        stroke-width="2.6"
+        stroke-linecap="round"
+        stroke-linejoin="round" />
+    </svg>
+  </span>
+</div>
+
+
+  <!-- FOLLOW INFO -->
+ <div class="follow-info">
+  <span><strong id="followersCount">0</strong> followers</span>
+  <span><strong id="followingCount">0</strong> following</span>
+</div>
+  <!-- BIO -->
+  <div class="profile-header">
+    <div class="profile-text">
+      <p id="bioText"> </p>
+      <textarea id="bioInput" placeholder="Write something about yourself..."></textarea>
+      <button id="saveBioBtn">Save</button>
+    </div>
+    <button class="edit-bio-btn" id="editBioBtn">Edit Bio</button>
+  </div>
+
+  <!-- ACTION BUTTONS -->
+  <div class="profile-actions">
+    <button class="follow-btn">Follow</button>
+    <button class="message-btn">Message</button>
+    <i class="fa-solid fa-ellipsis more-btn"></i>
+  </div>
+<div id="profileFeed"></div>
+</div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="auth-modal" id="authModal">
+  <div class="auth-box">
+     <i id="step1Arrow" class="auth-back-ico fa-solid fa-arrow-left"></i>
+   <h3>Signup</h3>
+    <!-- STEP 1 -->
+    <div id="stepOne">
+      <input type="text" id="authContact" placeholder="Phone number or Email">
+      <input type="text" id="firstName" placeholder="First name">
+      <input type="text" id="lastName" placeholder="Last name">
+      <select id="gender">
+        <option value="">Select gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+      <input type="date" id="dob">
+      <button id="continueBtn" type="button">Continue</button>
+    </div>
+    <!-- STEP 2 -->
+    <div id="stepTwo" style="display:none;">
+      <input type="password" id="password" placeholder="Enter password">
+      <input type="password" id="confirmPassword" placeholder="Confirm password">
+      <button id="authSubmit" type="button">Signup</button>
+    </div>
+    <p id="signupSuccess" class="signup-success">
+      Your signup successful
+    </p>
+    <p id="authMsg"></p>
+  </div>
+</div>
+
+ <!-- login MODAL -->
+<div class="auth-modal" id="loginModal">
+  <div class="auth-box">
+<i id="loginBackBtn" class="login-back fa-solid fa-arrow-left"></i>
+    <h3>Login</h3>
+    <input type="text" id="loginContact" placeholder="Phone number or Email">
+    <input type="password" id="loginPassword" placeholder="Password">
+    <button id="loginBtn" type="button">Login</button>
+    <p id="loginSuccess" class="success-text">Login successful</p>
+    <p id="loginMsg" class="error-text"></p>
+  </div>
+</div>
+
+  <!-- EDIT POST MODAL -->
+<div id="editPostModal" class="auth-modal" style="display:none;">
+  <div class="auth-box">
+    <h3>Edit post</h3>
+    <textarea
+      id="editPostCaption"
+      placeholder="Edit caption..."
+    ></textarea>
+    <img
+      id="editPostImage"
+      style="display:none; width:100%; border-radius:8px;">
+    <video
+      id="editPostVideo"
+      controls
+      style="display:none; width:100%; border-radius:8px;"
+    ></video>
+    <button id="saveEditPostBtn">Save</button>
+    <button id="cancelEditPostBtn">Cancel</button>
+  </div>
+</div>
+
+
+  <!-- MEDIA CAPTION MODAL -->
+  <div id="mediaCaptionModal" class="auth-modal" style="display:none;">
+    <div class="auth-box">
+      <h3>Create post</h3>
+      <textarea
+        id="mediaCaptionInput"
+        placeholder="Write a caption..."
+      ></textarea>
+      <img id="mediaPreview" style="display:none; width:100%; border-radius:8px;">
+      <video id="videoPreview" controls style="display:none; width:100%; border-radius:8px;"></video>
+      <button id="mediaPostBtn">Post</button>
+    </div>
+  </div>
+
+<!-- show reaction model-->
+<div id="reactorsModal" class="reactors-modal">
+  <div class="reactors-box">
+    <div class="reactors-head">
+      <div class="reactors-title">Reactions</div>
+      <button id="reactorsClose" class="reactors-close">✕</button>
+    </div>
+    <div id="reactTabs" class="react-tabs"></div>
+    <div id="reactorsList" class="reactors-list"></div>
+  </div>
+</div>
+
+<!-- comment model -->
+<div id="commentsModal" class="cmodal">
+  <div class="cmodal-sheet">
+    <div class="cmodal-head">
+      <div class="cmodal-title">Comments</div>
+      <button id="cmodalClose" class="cmodal-close">✕</button>
+    </div>
+    <div id="cmodalList" class="cmodal-list"></div>
+    <div class="cmodal-inputbar">
+      <input id="cmodalInput" type="text" placeholder="Write a comment..." />
+      <button id="cmodalSend">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- comment delet model -->
+<div id="confirmModal" class="confirm-modal">
+  <div class="confirm-box">
+    <div class="confirm-title">Confirm</div>
+    <div class="confirm-text" id="confirmText">
+      Do you want to delete your comment?
+    </div>
+
+    <div class="confirm-actions">
+      <button id="confirmCancel" class="confirm-btn cancel">Cancel</button>
+      <button id="confirmOk" class="confirm-btn danger">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- change name model model -->
+<div class="auth-modal" id="changeNameModal" style="display:none;">
+  <div class="auth-box">
+    <i id="changeNameBackBtn" class="login-back fa-solid fa-arrow-left"></i>
+    <h3>Change name</h3>
+    <input type="text" id="newFirstName" placeholder="First name">
+    <input type="text" id="newLastName" placeholder="Last name">
+    <button id="saveNameBtn" class="btn-danger" type="button">
+  <span class="btn-text">Save</span>
+  <span class="btn-spinner" aria-hidden="true"></span>
+</button>
+<p id="changeNameMsg"></p>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>
+
+
+
