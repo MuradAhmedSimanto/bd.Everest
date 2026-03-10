@@ -6072,3 +6072,33 @@ document.addEventListener("DOMContentLoaded", function () {
     savedItemsBtn.addEventListener("click", showUnderDevelopmentAlert);
   }
 });
+
+//veryfication//
+document.addEventListener("DOMContentLoaded", function () {
+  const getVerifiedBtn = document.getElementById("getVerifiedBtn");
+  const getVerifiedPage = document.getElementById("getVerifiedPage");
+  const getVerifiedBackBtn = document.getElementById("getVerifiedBackBtn");
+  const settingsPage = document.getElementById("settingsPage");
+
+  if (!getVerifiedBtn || !getVerifiedPage || !getVerifiedBackBtn || !settingsPage) {
+    return;
+  }
+
+  getVerifiedBtn.addEventListener("click", function () {
+    settingsPage.style.display = "none";
+    getVerifiedPage.style.display = "block";
+
+    history.pushState({ page: "getVerified" }, "", "#get-verified");
+  });
+
+  getVerifiedBackBtn.addEventListener("click", function () {
+    history.back();
+  });
+
+  window.addEventListener("popstate", function () {
+    if (getVerifiedPage.style.display === "block") {
+      getVerifiedPage.style.display = "none";
+      settingsPage.style.display = "block";
+    }
+  });
+});
