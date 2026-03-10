@@ -5859,3 +5859,71 @@ window.addEventListener("popstate", function () {
     settingsPage.style.display = "block";
   }
 });
+
+//change password model//
+document.addEventListener("DOMContentLoaded", function () {
+  const changePasswordBtn = document.getElementById("changePasswordBtn");
+  const changePasswordPage = document.getElementById("changePasswordPage");
+  const changePasswordBackBtn = document.getElementById("changePasswordBackBtn");
+  const settingsPage = document.getElementById("settingsPage");
+
+  const cpSubmitBtn = document.getElementById("cpSubmitBtn");
+  const cpBtnText = document.querySelector(".cp-btn-text");
+  const cpBtnSpinner = document.querySelector(".cp-btn-spinner");
+
+  if (
+    !changePasswordBtn ||
+    !changePasswordPage ||
+    !changePasswordBackBtn ||
+    !settingsPage ||
+    !cpSubmitBtn ||
+    !cpBtnText ||
+    !cpBtnSpinner
+  ) {
+    return;
+  }
+
+  let cpPageOpened = false;
+
+  function openChangePasswordPage() {
+    settingsPage.style.display = "none";
+    changePasswordPage.style.display = "block";
+    cpPageOpened = true;
+
+    history.pushState({ changePasswordOpen: true }, "");
+  }
+
+  function closeChangePasswordPage() {
+    changePasswordPage.style.display = "none";
+    settingsPage.style.display = "block";
+    cpPageOpened = false;
+  }
+
+  changePasswordBtn.addEventListener("click", function () {
+    openChangePasswordPage();
+  });
+
+  changePasswordBackBtn.addEventListener("click", function () {
+    closeChangePasswordPage();
+  });
+
+  window.addEventListener("popstate", function () {
+    if (cpPageOpened) {
+      closeChangePasswordPage();
+    }
+  });
+
+  cpSubmitBtn.addEventListener("click", function () {
+    cpSubmitBtn.disabled = true;
+    cpBtnText.textContent = "Please wait...";
+    cpBtnSpinner.style.display = "inline-block";
+
+    setTimeout(function () {
+      cpBtnSpinner.style.display = "none";
+      cpBtnText.textContent = "Change Password";
+      cpSubmitBtn.disabled = false;
+
+      alert("This feature is still under development");
+    }, 2000);
+  });
+});
