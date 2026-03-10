@@ -6102,3 +6102,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
+//personal details section//
+document.addEventListener("DOMContentLoaded", function () {
+  const personalDetailsBtn = document.getElementById("personalDetailsBtn");
+
+  if (!personalDetailsBtn) return;
+
+  personalDetailsBtn.addEventListener("click", function () {
+    alert("This feature is still under development");
+  });
+});
