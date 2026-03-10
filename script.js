@@ -5928,8 +5928,9 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-//help and suport section//
+// help and support section
 document.addEventListener("DOMContentLoaded", function () {
+
   const helpSupportBtn = document.getElementById("helpSupportBtn");
   const helpSupportPage = document.getElementById("helpSupportPage");
   const helpSupportBackBtn = document.getElementById("helpSupportBackBtn");
@@ -5939,34 +5940,44 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
+  // open help page
   helpSupportBtn.addEventListener("click", function () {
     settingsPage.style.display = "none";
     helpSupportPage.style.display = "block";
+
+    // add history state
+    history.pushState({ page: "helpSupport" }, "", "#help-support");
   });
 
+  // header back arrow
   helpSupportBackBtn.addEventListener("click", function () {
-    helpSupportPage.style.display = "none";
-    settingsPage.style.display = "block";
+    history.back();
   });
+
+  // mobile browser back button
+  window.addEventListener("popstate", function () {
+    if (helpSupportPage.style.display === "block") {
+      helpSupportPage.style.display = "none";
+      settingsPage.style.display = "block";
+    }
+  });
+
 });
 
-
-//community gidlines cection//
+// community guidelines section//
 document.addEventListener("DOMContentLoaded", function () {
+
   const communityGuidelinesBtn = document.getElementById("communityGuidelinesBtn");
   const communityGuidelinesPage = document.getElementById("communityGuidelinesPage");
   const communityGuidelinesBackBtn = document.getElementById("communityGuidelinesBackBtn");
   const leftDrawer = document.getElementById("leftDrawer");
   const drawerOverlay = document.getElementById("drawerOverlay");
 
-  if (
-    !communityGuidelinesBtn ||
-    !communityGuidelinesPage ||
-    !communityGuidelinesBackBtn
-  ) {
+  if (!communityGuidelinesBtn || !communityGuidelinesPage || !communityGuidelinesBackBtn) {
     return;
   }
 
+  // open page
   communityGuidelinesBtn.addEventListener("click", function (e) {
     e.preventDefault();
 
@@ -5980,13 +5991,22 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     communityGuidelinesPage.style.display = "block";
+
+    // add history state
+    history.pushState({ page: "communityGuidelines" }, "", "#community-guidelines");
   });
 
+  // header back arrow
   communityGuidelinesBackBtn.addEventListener("click", function () {
+    history.back();
+  });
+
+  // mobile browser back button
+  window.addEventListener("popstate", function () {
     communityGuidelinesPage.style.display = "none";
   });
-});
 
+});
 //mobile app section//
 document.addEventListener("DOMContentLoaded", function () {
 
