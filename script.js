@@ -6048,3 +6048,27 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
 });
+
+//profile/my activity/saved items alart message//
+document.addEventListener("DOMContentLoaded", function () {
+  const menuProfileBtn = document.getElementById("menuProfileBtn");
+  const myActivityBtn = document.getElementById("myActivityBtn");
+  const savedItemsBtn = document.getElementById("savedItemsBtn");
+
+  function showUnderDevelopmentAlert(e) {
+    e.preventDefault();
+    alert("This feature is still under development");
+  }
+
+  if (menuProfileBtn) {
+    menuProfileBtn.addEventListener("click", showUnderDevelopmentAlert);
+  }
+
+  if (myActivityBtn) {
+    myActivityBtn.addEventListener("click", showUnderDevelopmentAlert);
+  }
+
+  if (savedItemsBtn) {
+    savedItemsBtn.addEventListener("click", showUnderDevelopmentAlert);
+  }
+});
