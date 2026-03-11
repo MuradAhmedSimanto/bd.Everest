@@ -1435,12 +1435,36 @@ if (e.target.classList.contains("report")) {
   return;
 }
 
+
+// SAVE
+if (e.target.closest(".save")) {
+  e.stopPropagation();
+  alert("This feature is still under development");
+
+  const postEl = e.target.closest(".post");
+  const menu = postEl?.querySelector(".post-menu-dropdown");
+  if (menu) menu.classList.remove("show");
+
+  return;
+}
+
+// HIDE
+if (e.target.closest(".hide")) {
+  e.stopPropagation();
+  alert("This feature is still under development");
+
+  const postEl = e.target.closest(".post");
+  const menu = postEl?.querySelector(".post-menu-dropdown");
+  if (menu) menu.classList.remove("show");
+
+  return;
+}
+
   // PIN
   if (e.target.classList.contains("pin")) {
     alert("This feature is still under development");
   }
   });
-
 
 /* ================= REPORT POST ================= */
 const reportModal = document.getElementById("reportModal");
