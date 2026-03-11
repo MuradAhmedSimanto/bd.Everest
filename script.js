@@ -1521,6 +1521,11 @@ function isAnyPostMenuOpen() {
   return !!document.querySelector(".post-menu-dropdown.show");
 }
 
+window.addEventListener("popstate", () => {
+  if (isAnyPostMenuOpen()) {
+    closeAllPostMenus();
+  }
+});
 // ✅ Cloudinary upload এর জন্য file রাখবো
 let selectedFile = null;
 let selectedMediaType = null;
