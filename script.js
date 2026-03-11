@@ -484,6 +484,7 @@ const isOwner = !!(auth.currentUser && auth.currentUser.uid === userId);
     </div>
 
         </div>
+          <div class="post-menu-overlay"></div>
       </div>
     </div>
 
@@ -1210,6 +1211,14 @@ document.addEventListener("click", e => {
 
 if (e.target.closest(".reaction-box")) return;
 
+
+const item = e.target.closest(".pm-item");
+if (item) {
+  const post = item.closest(".post");
+  const menu = post?.querySelector(".post-menu-dropdown");
+  if (menu) menu.classList.remove("show");
+}
+
   // CLOSE MENUS
   document.querySelectorAll(".post-menu-dropdown").forEach(m => {
     if (!m.parentElement.contains(e.target)) {
@@ -1219,8 +1228,19 @@ if (e.target.closest(".reaction-box")) return;
 
   // TOGGLE MENU
   if (e.target.classList.contains("post-menu")) {
-    e.target.nextElementSibling.classList.toggle("show");
+  const menu = e.target.nextElementSibling;
+
+  const willOpen = !menu.classList.contains("show");
+
+  closeAllPostMenus();
+
+  if (willOpen) {
+    menu.classList.add("show");
+
+    // mobile back button handle
+    history.pushState({ menuOpen: true }, "");
   }
+}
 
   // DELETE POST
 if (e.target.classList.contains("delete")) {
@@ -1486,6 +1506,20 @@ confirmReportBtn?.addEventListener("click", async () => {
     confirmReportBtn.textContent = "Report";
   }
 });
+
+
+
+
+//post dropdown mobile back btn
+function closeAllPostMenus() {
+  document.querySelectorAll(".post-menu-dropdown").forEach(menu => {
+    menu.classList.remove("show");
+  });
+}
+
+function isAnyPostMenuOpen() {
+  return !!document.querySelector(".post-menu-dropdown.show");
+}
 
 // ✅ Cloudinary upload এর জন্য file রাখবো
 let selectedFile = null;
