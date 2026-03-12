@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Everest</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -832,17 +832,44 @@
 
  <!-- login MODAL -->
 <div class="auth-modal" id="loginModal">
-  <div class="auth-box">
-<i id="loginBackBtn" class="login-back fa-solid fa-arrow-left"></i>
-    <h3>Login</h3>
-    <input type="text" id="loginContact" placeholder="Phone number or Email">
+  <div class="auth-box modern-login">
+    <div class="login-brand">
+      <h2>Everest</h2>
+    </div>
+    <h3>Sign In to your Account</h3>
+    <!-- Google login -->
+    <button class="google-login">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">
+      Sign in with Google
+    </button>
+    <div class="login-divider">
+      <span>or</span>
+    </div>
+
+    <input type="text" id="loginContact" placeholder="Email or Phone">
     <input type="password" id="loginPassword" placeholder="Password">
-    <button id="loginBtn" type="button">Login</button>
-    <p id="loginSuccess" class="success-text">Login successful</p>
-    <p id="loginMsg" class="error-text"></p>
+
+    <div class="login-options">
+
+      <label class="remember">
+        <input type="checkbox">
+        <span>Remember me</span>
+      </label>
+
+      <a href="#">Forgotten password?</a>
+
+    </div>
+
+    <button id="loginBtn" class="login-red-btn" type="button">
+      Sign In
+    </button>
+
+    <p class="signup-link">
+      Do not have an account? <a href="#">Sign Up</a>
+    </p>
+
   </div>
 </div>
-
   <!-- EDIT POST MODAL -->
 <div id="editPostModal" class="auth-modal" style="display:none;">
   <div class="auth-box">
@@ -1111,7 +1138,9 @@
   </div>
 </div>
 
-  <!--single post model-->
+
+
+<!--single post model-->
 <div id="imageViewerModal" class="image-viewer-modal" aria-hidden="true">
   <div class="image-viewer-overlay"></div>
   <button id="imageViewerCloseBtn" class="image-viewer-close" type="button" aria-label="Close">
@@ -1121,16 +1150,16 @@
     <img id="imageViewerImg" src="" alt="Post image" />
   </div>
 </div>
+
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
-<script src="script.js"></script>
+<script src="js/script.js"></script>
 </body>
 </html>
-
 
 
 
