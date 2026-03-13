@@ -820,7 +820,7 @@
       </div>
 
       <div class="input-group">
-        <i class="fa-solid fa-venus-mars"></i>
+        <i class="fa-solid fa-user-tag"></i>
         <select id="gender">
           <option value="">Gender:</option>
           <option value="Male">Male</option>
@@ -831,7 +831,9 @@
 
       <div class="input-group">
         <i class="fa-regular fa-calendar"></i>
-        <input type="date" id="dob">
+       <input type="text" id="dob" placeholder="Birthdate"
+          onfocus="this.type='date'"
+          onblur="if(!this.value)this.type='text'">
       </div>
 
       <label class="check-row">
