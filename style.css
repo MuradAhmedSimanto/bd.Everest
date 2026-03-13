@@ -2198,126 +2198,223 @@ body.profile-mode #bioText{
 
 
 /*change name*/
-/* ===== Change Name Modal Base ===== */
-#changeNameModal{
+#changeNameModal {
   position: fixed;
   inset: 0;
-  display: none;               /* JS দিয়ে flex হবে */
+  display: none;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,.55);
+  background: rgba(0, 0, 0, 0.55);
   z-index: 9999;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
-#changeNameModal .auth-box{
-  width: min(560px, 92vw);
-  background: #fff;
+#changeNameModal .auth-box {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
   border-radius: 22px;
-  padding: 22px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  padding: 24px 20px 22px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  box-sizing: border-box;
+  position: relative;
 }
 
-/* ===== Title Center ===== */
-#changeNameModal h2,
-#changeNameModal h3,
-#changeNameModal .modal-title,
-#changeNameModal .auth-title{
+/* back arrow remove */
+#changeNameBackBtn {
+  display: none !important;
+}
+
+/* brand */
+#changeNameModal .brand-title {
+  margin: 0 0 10px;
   text-align: center;
-  margin: 6px 0 14px;
-  font-size: 20px;
+  font-size: 34px;
   font-weight: 800;
+  line-height: 1.05;
   color: #111;
 }
 
-/* ===== Mobile: Full Screen ===== */
-@media (max-width: 560px){
-  #changeNameModal{
-    background: #fff;          /* full screen হলে overlay লাগবে না */
-  }
-
-  #changeNameModal .auth-box{
-    width: 100vw;
-    height: 100vh;
-    border-radius: 0;
-    padding: 18px 16px;
-    box-shadow: none;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 14px;
-    padding-bottom: calc(18px + env(safe-area-inset-bottom));
-  }
+/* title */
+#changeNameModal .change-title,
+#changeNameModal h2,
+#changeNameModal h3,
+#changeNameModal .modal-title,
+#changeNameModal .auth-title {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #111;
 }
 
-/* ===== Inputs nicer ===== */
-#changeNameModal input{
+/* description */
+#changeNameModal .change-desc {
+  max-width: 290px;
+  margin: 0 auto 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #444;
+  text-align: left;
+}
+
+/* input wrapper */
+#changeNameModal .input-group {
+  margin-bottom: 12px;
+}
+
+/* inputs */
+#changeNameModal input {
   width: 100%;
-  padding: 14px 14px;
-  border: 1px solid #e6e6e6;
-  border-radius: 16px;
+  height: 54px;
+  padding: 0 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 18px;
   outline: none;
-  font-size: 16px;
+  font-size: 15px;
+  color: #222;
+  background: #ffffff;
+  box-sizing: border-box;
 }
 
-#changeNameModal input:focus{
+#changeNameModal input::placeholder {
+  color: #8a8a8a;
+}
+
+#changeNameModal input:focus {
   border-color: #ff1f1f;
+  box-shadow: 0 0 0 3px rgba(255, 31, 31, 0.08);
 }
 
-/* ===== Premium Red Button (Full width like inputs) ===== */
-#changeNameModal .btn-danger{
+/* save button */
+#changeNameModal .btn-danger,
+#saveNameBtn {
   width: 100%;
-  padding: 14px 14px;
-  border: 0;
-  border-radius: 16px;
+  height: 54px;
+  border: none;
+  border-radius: 18px;
   cursor: pointer;
   color: #fff;
+  font-size: 18px;
   font-weight: 800;
   background: #ff1f1f;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  box-shadow: 0 12px 26px rgba(255,31,31,.28);
+  margin-top: 6px;
+  box-shadow: 0 12px 26px rgba(255, 31, 31, 0.22);
+  transition: background 0.2s ease, transform 0.15s ease;
 }
 
-#changeNameModal .btn-danger:hover{
-  filter: brightness(0.95);
+#changeNameModal .btn-danger:hover,
+#saveNameBtn:hover {
+  background: #eb1010;
 }
 
-#changeNameModal .btn-danger:disabled{
-  opacity: .85;
+#changeNameModal .btn-danger:active,
+#saveNameBtn:active {
+  transform: scale(0.99);
+}
+
+#changeNameModal .btn-danger:disabled,
+#saveNameBtn:disabled {
+  opacity: 0.85;
   cursor: not-allowed;
 }
 
-/* ===== Spinner ===== */
-#changeNameModal .btn-spinner{
+/* spinner */
+#changeNameModal .btn-spinner {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  border: 2px solid rgba(255,255,255,.45);
+  border: 2px solid rgba(255, 255, 255, 0.45);
   border-top-color: #fff;
   display: none;
-  animation: spin .8s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
-#changeNameModal .btn-danger.loading .btn-spinner{ display: inline-block; }
-#changeNameModal .btn-danger.loading .btn-text{ opacity: .95; }
-
-@keyframes spin{
-  to { transform: rotate(360deg); }
+#changeNameModal .btn-danger.loading .btn-spinner,
+#saveNameBtn.loading .btn-spinner {
+  display: inline-block;
 }
 
-
-#changeNameModal .auth-box{
-  position: relative;
+#changeNameModal .btn-danger.loading .btn-text,
+#saveNameBtn.loading .btn-text {
+  opacity: 0.95;
 }
 
-#changeNameBackBtn{
-  position: absolute;
-  top: 35px;   
-  left: 16px;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
+/* message */
+#changeNameMsg {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 14px;
+  color: red;
+}
+
+/* mobile full screen */
+@media (max-width: 560px) {
+  #changeNameModal {
+    background: #ffffff;
+    padding: 0;
+    align-items: stretch;
+    justify-content: center;
+  }
+
+  #changeNameModal .auth-box {
+    max-width: none;
+    width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+    padding: 20px 16px 24px;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  #changeNameModal .brand-title {
+    font-size: 30px;
+    margin-bottom: 8px;
+  }
+
+  #changeNameModal .change-title,
+  #changeNameModal h2,
+  #changeNameModal h3,
+  #changeNameModal .modal-title,
+  #changeNameModal .auth-title {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  #changeNameModal .change-desc {
+    max-width: 255px;
+    font-size: 13px;
+    margin-bottom: 18px;
+  }
+
+  #changeNameModal input {
+    height: 52px;
+    font-size: 14px;
+    border-radius: 16px;
+  }
+
+  #changeNameModal .btn-danger,
+  #saveNameBtn {
+    height: 52px;
+    font-size: 17px;
+    border-radius: 16px;
+    margin-top: 4px;
+  }
+}
 
 
 /*no break cover*/
