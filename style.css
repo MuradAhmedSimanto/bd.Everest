@@ -1158,26 +1158,28 @@ body.modal-open{
   position: fixed;
   inset: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   background: #fff;
   z-index: 999999;
-
-  display: none; /* important */
+  display: none;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .auth-modal.show{
   display: flex;
 }
 
-
 .modern-login{
   width: 360px;
+  max-width: 100%;
   padding: 32px 26px;
   border-radius: 14px;
   text-align: center;
   background: #fff;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .login-brand h2{
@@ -1241,6 +1243,7 @@ body.modal-open{
   font-size: 14px;
   box-sizing: border-box;
 }
+
 .login-options{
   display: flex;
   justify-content: space-between;
@@ -1293,13 +1296,14 @@ body.modal-open{
 }
 
 @media (max-width: 768px){
-  .auth-modal.show{
-    align-items: flex-start;
+  .auth-modal{
+    align-items: center;
+    justify-content: center;
   }
 
   .modern-login{
     width: 100%;
-    height: 100%;
+    height: 100vh;
     border-radius: 0;
     padding: 40px 22px;
   }
