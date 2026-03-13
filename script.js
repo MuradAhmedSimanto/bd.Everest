@@ -618,35 +618,48 @@ profileInput.onchange = async () => {
 
 
 //sub cover
-coverInput.onchange = () => {
-  const file = coverInput.files[0];
+// sub cover
+coverInput.onchange = async () => {
+  const file = coverInput.files?.[0];
+  coverInput.value = ""; // same file reselect fix
   if (!file || !auth.currentUser) return;
 
- 
+  showUploadBusy("Uploading cover photo...");
 
-  const r = new FileReader();
-  r.onload = () => {
-    coverPic.src = r.result;
+  try {
+    // instant preview
+    const localUrl = URL.createObjectURL(file);
+    setSrcSafe("coverPic", localUrl);
 
-    // ✅ save cover
-    db.collection("users")
-      .doc(auth.currentUser.uid)
-      .update({
-        coverPic: r.result
-      });
+    // upload cloudinary
+    const url = await uploadToCloudinary(file);
 
-savePostToFirebase({
-  type: "image",
-  media: r.result,
-  isProfileUpdate: true,
-  updateType: "cover"
-});
+    // final paint
+    setSrcSafe("coverPic", url);
 
-  };
+    // cache
+    MEMORY_COVER_PHOTO = url;
 
-  r.readAsDataURL(file);
+    // firestore save
+    await db.collection("users").doc(auth.currentUser.uid).update({
+      coverPic: url
+    });
+
+    // optional: create post
+    await savePostToFirebase({
+      type: "image",
+      media: url,
+      isProfileUpdate: true,
+      updateType: "cover"
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert(err?.message || "Cover upload failed");
+  } finally {
+    hideUploadBusy();
+  }
 };
-
 
 
 
@@ -1329,9 +1342,6 @@ if (e.target.closest(".copy")) {
 
 
 
- 
-
-
   // DOWNLOAD
   if (e.target.classList.contains("download")) {
     const media = e.target.closest(".post")?.querySelector("img,video");
@@ -1343,74 +1353,19 @@ if (e.target.closest(".copy")) {
     a.click();
   }
 
- 
-// EDIT POST
-if (e.target.classList.contains("edit")) {
-  e.stopPropagation(); // 🔥 THIS IS THE KEY
+ // EDIT POST
+if (e.target.closest(".edit")) {
+  e.stopPropagation();
 
   const postEl = e.target.closest(".post");
   if (!postEl) return;
 
-  const editPostModal = document.getElementById("editPostModal");
-  const editPostCaption = document.getElementById("editPostCaption");
-  const editPostImage = document.getElementById("editPostImage");
-  const editPostVideo = document.getElementById("editPostVideo");
-
   const postId = postEl.dataset.id;
+  if (!postId) return;
 
-
-
-  db.collection("posts").doc(postId).get().then(snap => {
-    if (!snap.exists) return;
-
-    const data = snap.data();
-    editPostCaption.value = data.caption || "";
-
-    if (data.type === "image") {
-      editPostImage.src = data.media;
-      editPostImage.style.display = "block";
-      editPostVideo.style.display = "none";
-    } else {
-      editPostVideo.src = data.media;
-      editPostVideo.style.display = "block";
-      editPostImage.style.display = "none";
-    }
-
-    openModalHistory("editPostModal");
-  });
+  EditPostModule.openByPostId(postId);
+  return;
 }
-//edit post save cancle
-let editingPostId = null;
-
-
-// SAVE EDIT
-document.getElementById("saveEditPostBtn").onclick = async () => {
-  if (!editingPostId) return;
-
-  const newCaption =
-    document.getElementById("editPostCaption").value.trim();
-
-  try {
-    await db.collection("posts")
-      .doc(editingPostId)
-      .update({
-        caption: newCaption
-      });
-
-    document.getElementById("editPostModal").style.display = "none";
-    editingPostId = null;
-
-  } catch (err) {
-    console.error(err);
-    alert("Failed to update post");
-  }
-};
-
-// CANCEL EDIT
-document.getElementById("cancelEditPostBtn").onclick = () => {
-  document.getElementById("editPostModal").style.display = "none";
-  editingPostId = null;
-};
 
 // REPORT
 if (e.target.classList.contains("report")) {
@@ -6523,6 +6478,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 })();
 
+
 //signup model to login model//
 document.addEventListener("DOMContentLoaded", function () {
   const authModal = document.getElementById("authModal");
@@ -6548,3 +6504,286 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
+
+// edit post model
+/* ================= EDIT POST MODULE START ================= */
+const EditPostModule = (() => {
+  const modal = document.getElementById("editPostModal");
+  const captionInput = document.getElementById("editPostCaption");
+  const imageEl = document.getElementById("editPostImage");
+  const videoEl = document.getElementById("editPostVideo");
+  const mediaInput = document.getElementById("editPostMediaInput");
+  const saveBtn = document.getElementById("saveEditPostBtn");
+  const cancelBtn = document.getElementById("cancelEditPostBtn");
+
+  let editingPostId = null;
+  let editingPostNewFile = null;
+  let editingPostCurrentType = "";
+  let editingPostCurrentMedia = "";
+
+  function resetVideo() {
+    if (!videoEl) return;
+    try {
+      videoEl.pause();
+      videoEl.removeAttribute("src");
+      videoEl.load();
+    } catch (err) {
+      console.warn("Video reset failed:", err);
+    }
+  }
+
+  function resetState() {
+    editingPostId = null;
+    editingPostNewFile = null;
+    editingPostCurrentType = "";
+    editingPostCurrentMedia = "";
+
+    if (captionInput) captionInput.value = "";
+
+    if (imageEl) {
+      imageEl.style.display = "none";
+      imageEl.removeAttribute("src");
+    }
+
+    if (videoEl) {
+      resetVideo();
+      videoEl.style.display = "none";
+    }
+
+    if (mediaInput) mediaInput.value = "";
+  }
+
+  function open() {
+    if (!modal) return;
+    modal.style.display = "block";
+    document.body.classList.add("editing-post");
+  }
+
+  function close() {
+    if (!modal) return;
+    modal.style.display = "none";
+    document.body.classList.remove("editing-post");
+    resetState();
+  }
+
+  function renderMedia(type, src) {
+    if (type === "image") {
+      if (imageEl) {
+        imageEl.src = src || "";
+        imageEl.style.display = "block";
+      }
+      if (videoEl) {
+        resetVideo();
+        videoEl.style.display = "none";
+      }
+      return;
+    }
+
+    if (type === "video") {
+      if (videoEl) {
+        videoEl.src = src || "";
+        videoEl.style.display = "block";
+      }
+      if (imageEl) {
+        imageEl.style.display = "none";
+        imageEl.removeAttribute("src");
+      }
+      return;
+    }
+
+    if (imageEl) {
+      imageEl.style.display = "none";
+      imageEl.removeAttribute("src");
+    }
+
+    if (videoEl) {
+      resetVideo();
+      videoEl.style.display = "none";
+    }
+  }
+
+  async function openByPostId(postId) {
+    if (!postId) return;
+
+    try {
+      const snap = await db.collection("posts").doc(postId).get();
+      if (!snap.exists) return;
+
+      const data = snap.data() || {};
+
+      editingPostId = postId;
+      editingPostNewFile = null;
+      editingPostCurrentType = data.type || "";
+      editingPostCurrentMedia = data.media || "";
+
+      if (captionInput) {
+        captionInput.value = data.caption || "";
+      }
+
+      renderMedia(editingPostCurrentType, editingPostCurrentMedia);
+      if (mediaInput) mediaInput.value = "";
+
+      open();
+    } catch (err) {
+      console.error("Edit load failed:", err);
+      alert("Failed to open edit post");
+    }
+  }
+
+  async function save() {
+    if (!editingPostId) return;
+
+    const newCaption = captionInput ? captionInput.value.trim() : "";
+
+    try {
+      if (saveBtn) saveBtn.disabled = true;
+
+      let updatedType = editingPostCurrentType;
+      let updatedMedia = editingPostCurrentMedia;
+
+      if (editingPostNewFile) {
+        showUploadBusy("Updating post media...");
+
+        const uploadedUrl = await uploadToCloudinary(editingPostNewFile);
+        updatedMedia = uploadedUrl;
+
+        if (editingPostNewFile.type.startsWith("image/")) {
+          updatedType = "image";
+        } else if (editingPostNewFile.type.startsWith("video/")) {
+          updatedType = "video";
+        }
+      }
+
+      await db.collection("posts").doc(editingPostId).update({
+        caption: newCaption,
+        media: updatedMedia,
+        type: updatedType,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      updateRenderedPostUI(editingPostId, {
+        caption: newCaption,
+        media: updatedMedia,
+        type: updatedType
+      });
+
+      close();
+    } catch (err) {
+      console.error("Edit save failed:", err);
+      alert("Failed to update post");
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
+      hideUploadBusy();
+    }
+  }
+
+  function updateRenderedPostUI(postId, data) {
+    const postEls = document.querySelectorAll(`.post[data-id="${postId}"]`);
+    if (!postEls.length) return;
+
+    postEls.forEach((postEl) => {
+      const captionWrap = postEl.querySelector(".post-text[data-full]");
+      const readMoreEl = postEl.querySelector(".read-more");
+      const mediaWrap = postEl.querySelector(".post-media");
+
+      if (captionWrap) {
+        const c = formatCaption(data.caption || "");
+        captionWrap.textContent = c.preview;
+        captionWrap.setAttribute("data-full", c.full);
+
+        if (c.showReadMore) {
+          captionWrap.classList.add("collapsed");
+          if (readMoreEl) {
+            readMoreEl.style.display = "";
+          } else {
+            captionWrap.insertAdjacentHTML(
+              "afterend",
+              `<span class="read-more">Read more</span>`
+            );
+          }
+        } else {
+          captionWrap.classList.remove("collapsed");
+          if (readMoreEl) readMoreEl.remove();
+        }
+      }
+
+      if (mediaWrap && data.type !== "text") {
+        if (data.type === "image") {
+          mediaWrap.innerHTML = `<img src="${data.media}" loading="lazy" decoding="async">`;
+        } else if (data.type === "video") {
+          mediaWrap.innerHTML = `
+            <video controls playsinline preload="metadata">
+              <source src="${data.media}" type="video/mp4">
+            </video>
+          `;
+        }
+      }
+    });
+
+    if (FEED_CACHE_MAP && FEED_CACHE_MAP.has(postId)) {
+      const oldItem = FEED_CACHE_MAP.get(postId);
+      const nextItem = {
+        ...oldItem,
+        caption: data.caption,
+        media: data.media,
+        type: data.type
+      };
+      FEED_CACHE_MAP.set(postId, nextItem);
+      FEED_CACHE = (FEED_CACHE || []).map((p) => p.postId === postId ? nextItem : p);
+      try {
+        localStorage.setItem("everest_feed_cache_v1", JSON.stringify(FEED_CACHE.slice(0, 40)));
+      } catch (e) {}
+    }
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    editingPostNewFile = file;
+    const localUrl = URL.createObjectURL(file);
+
+    if (file.type.startsWith("image/")) {
+      renderMedia("image", localUrl);
+    } else if (file.type.startsWith("video/")) {
+      renderMedia("video", localUrl);
+    } else {
+      alert("Only image or video allowed");
+    }
+  }
+
+  function bindEvents() {
+    if (imageEl && mediaInput) {
+      imageEl.addEventListener("click", () => mediaInput.click());
+    }
+
+    if (videoEl && mediaInput) {
+      videoEl.addEventListener("click", () => mediaInput.click());
+    }
+
+    if (mediaInput) {
+      mediaInput.addEventListener("change", handleFileChange);
+    }
+
+    if (saveBtn) {
+      saveBtn.addEventListener("click", save);
+    }
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", close);
+    }
+
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) close();
+      });
+    }
+  }
+
+  bindEvents();
+
+  return {
+    openByPostId,
+    close
+  };
+})();
