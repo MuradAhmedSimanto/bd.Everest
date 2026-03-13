@@ -915,26 +915,32 @@
   </div>
 </div>
   <!-- EDIT POST MODAL -->
-<div id="editPostModal" class="auth-modal" style="display:none;">
-  <div class="auth-box">
-    <h3>Edit post</h3>
-    <textarea
-      id="editPostCaption"
-      placeholder="Edit caption..."
-    ></textarea>
-    <img
-      id="editPostImage"
-      style="display:none; width:100%; border-radius:8px;">
-    <video
-      id="editPostVideo"
-      controls
-      style="display:none; width:100%; border-radius:8px;"
-    ></video>
-    <button id="saveEditPostBtn">Save</button>
-    <button id="cancelEditPostBtn">Cancel</button>
+<!-- EDIT POST FULLSCREEN PAGE -->
+<div id="editPostModal" class="edit-post-page" style="display:none;">
+  <div class="edit-post-page-inner">
+    <div class="edit-post-header">
+      <button id="cancelEditPostBtn" class="edit-back-btn">←</button>
+      <h3>Edit post</h3>
+      <button id="saveEditPostBtn" class="edit-save-btn">Save</button>
+    </div>
+    <div class="edit-post-body">
+      <textarea
+        id="editPostCaption"
+        placeholder="Edit caption..."
+      ></textarea>
+
+      <img
+        id="editPostImage"
+        style="display:none;">
+      <video
+        id="editPostVideo"
+        controls
+        style="display:none;"
+      ></video>
+    </div>
+
   </div>
 </div>
-
 
   <!-- MEDIA CAPTION MODAL -->
   <div id="mediaCaptionModal" class="auth-modal" style="display:none;">
