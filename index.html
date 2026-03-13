@@ -216,7 +216,6 @@
 
 
 <!--community guidlines-->
-<!-- COMMUNITY GUIDELINES SUBPAGE -->
 <div id="communityGuidelinesPage" class="community-guidelines-page" style="display:none;">
 
   <div class="cg-header">
@@ -313,7 +312,6 @@
 </div>
 
 <!--mobile app section-->
-<!-- MOBILE APP SUBPAGE -->
 <div id="mobileAppPage" class="mobile-app-page" style="display:none;">
 
   <div class="ma-header">
@@ -801,34 +799,78 @@
 <!-- AUTH MODAL -->
 <div class="auth-modal" id="authModal">
   <div class="auth-box">
-     <i id="step1Arrow" class="auth-back-ico fa-solid fa-arrow-left"></i>
-   <h3>Signup</h3>
+    <h2 class="brand-title">Everest</h2>
+    <h3>Create a new account</h3>
+
     <!-- STEP 1 -->
     <div id="stepOne">
-      <input type="text" id="authContact" placeholder="Phone number or Email">
-      <input type="text" id="firstName" placeholder="First name">
-      <input type="text" id="lastName" placeholder="Last name">
-      <select id="gender">
-        <option value="">Select gender</option>
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
-        <option value="Other">Other</option>
-      </select>
-      <input type="date" id="dob">
-      <button id="continueBtn" type="button">Continue</button>
+      <div class="input-group">
+        <i class="fa-regular fa-user"></i>
+        <input type="text" id="firstName" placeholder="First name">
+      </div>
+
+      <div class="input-group">
+        <i class="fa-regular fa-user"></i>
+        <input type="text" id="lastName" placeholder="Last name">
+      </div>
+
+      <div class="input-group">
+        <i class="fa-regular fa-envelope"></i>
+        <input type="text" id="authContact" placeholder="Email or phone">
+      </div>
+
+      <div class="input-group">
+        <i class="fa-solid fa-venus-mars"></i>
+        <select id="gender">
+          <option value="">Gender:</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <i class="fa-regular fa-calendar"></i>
+        <input type="date" id="dob">
+      </div>
+
+      <label class="check-row">
+        <input type="checkbox" id="offersCheck">
+        <span>I give permission to receive new information and offers via email</span>
+      </label>
+
+      <label class="check-row">
+        <input type="checkbox" id="termsCheck">
+        <span>Create an account to agree to our terms and conditions</span>
+      </label>
+
+      <button id="continueBtn" type="button">Sign Up</button>
+
+      <p class="signin-text">
+        Already have an account? <a href="#">Sign In</a>
+      </p>
     </div>
+
     <!-- STEP 2 -->
     <div id="stepTwo" style="display:none;">
-      <input type="password" id="password" placeholder="Enter password">
-      <input type="password" id="confirmPassword" placeholder="Confirm password">
+      <div class="input-group">
+        <i class="fa-solid fa-lock"></i>
+        <input type="password" id="password" placeholder="Enter password">
+      </div>
+
+      <div class="input-group">
+        <i class="fa-solid fa-lock"></i>
+        <input type="password" id="confirmPassword" placeholder="Confirm password">
+      </div>
+
       <button id="authSubmit" type="button">Signup</button>
     </div>
-    <p id="signupSuccess" class="signup-success">
-      Your signup successful
-    </p>
+
+    <p id="signupSuccess" class="signup-success">Your signup successful</p>
     <p id="authMsg"></p>
   </div>
 </div>
+
 
  <!-- login MODAL -->
 <div class="auth-modal" id="loginModal">
@@ -867,7 +909,7 @@
     <p class="signup-link">
       Do not have an account? <a href="#">Sign Up</a>
     </p>
-
+    
   </div>
 </div>
   <!-- EDIT POST MODAL -->
@@ -1138,6 +1180,8 @@
   </div>
 </div>
 
+
+
 <!--single post model-->
 <div id="imageViewerModal" class="image-viewer-modal" aria-hidden="true">
   <div class="image-viewer-overlay"></div>
@@ -1158,7 +1202,6 @@
 <script src="script.js"></script>
 </body>
 </html>
-
 
 
 
