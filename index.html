@@ -773,9 +773,14 @@
 
   <!-- FOLLOW INFO -->
  <div class="follow-info">
-  <span><strong id="followersCount">0</strong> followers</span>
-  <span><strong id="followingCount">0</strong> following</span>
+  <span id="followersBtn" class="follow-open-btn">
+    <strong id="followersCount">0</strong> followers
+  </span>
+  <span id="followingBtn" class="follow-open-btn">
+    <strong id="followingCount">0</strong> following
+  </span>
 </div>
+
   <!-- BIO -->
   <div class="profile-header">
     <div class="profile-text">
@@ -1215,6 +1220,22 @@
     <img id="imageViewerImg" src="" alt="Post image" />
   </div>
 </div>
+
+<!-- FOLLOW LIST PAGE -->
+<div id="followPage" class="follow-page hidden">
+  <div class="follow-page-header">
+    <button id="followBackBtn" class="follow-back-btn">&#10094;</button>
+    <h2 id="followPageName">User Name</h2>
+  </div>
+  <div class="follow-tabs">
+    <button id="followersTabBtn" class="follow-tab active">Followers</button>
+    <button id="followingTabBtn" class="follow-tab">Following</button>
+  </div>
+  <div class="follow-count-title" id="followCountTitle">0 followers</div>
+  <div id="followUsersList" class="follow-users-list"></div>
+</div>
+
+
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
