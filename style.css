@@ -5219,3 +5219,155 @@ to{transform:rotate(360deg)}
     font-size: 22px;
   }
 }
+
+
+/*followers follwing section*/
+.hidden {
+  display: none !important;
+}
+
+.follow-open-btn {
+  cursor: pointer;
+  margin-right: 14px;
+}
+
+.follow-open-btn:hover {
+  text-decoration: underline;
+}
+
+.follow-page {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  z-index: 99999;
+  overflow-y: auto;
+}
+
+.follow-page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e5e5;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
+}
+
+.follow-page-header h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.follow-back-btn {
+  border: none;
+  background: transparent;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0 6px 0 0;
+}
+
+.follow-tabs {
+  display: flex;
+  gap: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 61px;
+  background: #fff;
+  z-index: 9;
+}
+
+.follow-tab {
+  border: none;
+  background: transparent;
+  padding: 10px 14px;
+  border-radius: 20px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.follow-tab.active {
+  background: #e8f1ff;
+  color: #1877f2;
+}
+
+.follow-count-title {
+  padding: 16px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.follow-users-list {
+  padding: 0 10px 20px;
+}
+
+.follow-user-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 6px;
+  cursor: pointer;
+  border-radius: 12px;
+}
+
+.follow-user-row:hover {
+  background: #f7f7f7;
+}
+
+.follow-user-row img {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.follow-user-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.follow-user-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+}
+
+.follow-user-id {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.follow-empty {
+  text-align: center;
+  color: #777;
+  padding: 30px 10px;
+}
+.follow-user-name-wrap{
+  display:inline-flex;
+  align-items:center;
+  gap:1px; 
+}
+
+.follow-user-name{
+  font-weight:600;
+  font-size:15px;
+  line-height:1;
+}
+
+.verified-badge{
+  display:inline-flex;
+  align-items:center;
+  margin-left:2px; /* extra control */
+}
+
+.verified-icon{
+  width:15px;
+  height:15px;
+  display:block;
+}
