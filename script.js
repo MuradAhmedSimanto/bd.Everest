@@ -618,48 +618,35 @@ profileInput.onchange = async () => {
 
 
 //sub cover
-// sub cover
-coverInput.onchange = async () => {
-  const file = coverInput.files?.[0];
-  coverInput.value = ""; // same file reselect fix
+coverInput.onchange = () => {
+  const file = coverInput.files[0];
   if (!file || !auth.currentUser) return;
 
-  showUploadBusy("Uploading cover photo...");
+ 
 
-  try {
-    // instant preview
-    const localUrl = URL.createObjectURL(file);
-    setSrcSafe("coverPic", localUrl);
+  const r = new FileReader();
+  r.onload = () => {
+    coverPic.src = r.result;
 
-    // upload cloudinary
-    const url = await uploadToCloudinary(file);
+    // ✅ save cover
+    db.collection("users")
+      .doc(auth.currentUser.uid)
+      .update({
+        coverPic: r.result
+      });
 
-    // final paint
-    setSrcSafe("coverPic", url);
+savePostToFirebase({
+  type: "image",
+  media: r.result,
+  isProfileUpdate: true,
+  updateType: "cover"
+});
 
-    // cache
-    MEMORY_COVER_PHOTO = url;
+  };
 
-    // firestore save
-    await db.collection("users").doc(auth.currentUser.uid).update({
-      coverPic: url
-    });
-
-    // optional: create post
-    await savePostToFirebase({
-      type: "image",
-      media: url,
-      isProfileUpdate: true,
-      updateType: "cover"
-    });
-
-  } catch (err) {
-    console.error(err);
-    alert(err?.message || "Cover upload failed");
-  } finally {
-    hideUploadBusy();
-  }
+  r.readAsDataURL(file);
 };
+
 
 
 
@@ -1342,6 +1329,9 @@ if (e.target.closest(".copy")) {
 
 
 
+ 
+
+
   // DOWNLOAD
   if (e.target.classList.contains("download")) {
     const media = e.target.closest(".post")?.querySelector("img,video");
@@ -1353,6 +1343,7 @@ if (e.target.closest(".copy")) {
     a.click();
   }
 
+ 
  // EDIT POST
 if (e.target.closest(".edit")) {
   e.stopPropagation();
@@ -1366,6 +1357,7 @@ if (e.target.closest(".edit")) {
   EditPostModule.openByPostId(postId);
   return;
 }
+
 
 // REPORT
 if (e.target.classList.contains("report")) {
@@ -5510,423 +5502,288 @@ function setProfileActionsForUid(profileUid) {
 
 //search section//
 (() => {
-  if (window.__followPageModuleLoaded) return;
-  window.__followPageModuleLoaded = true;
+  const ALGOLIA_APP_ID = "ISIAJ0VOPF";
+  const ALGOLIA_SEARCH_KEY = "2b2d1959f16482266e968fee717ee2bb";
+  const ALGOLIA_INDEX = "users";
 
-  const DEFAULT_AVATAR = "https://i.imgur.com/6VBx3io.png";
+  const FALLBACK_AVATAR = "https://i.imgur.com/6VBx3io.png";
 
-  let currentProfileUid = "";
-  let unsubFollowList = null;
+  const esc = (s = "") => String(s).replace(/[<>]/g, "");
+  const debounce = (fn, wait = 180) => {
+    let t = null;
+    return (...args) => {
+      clearTimeout(t);
+      t = setTimeout(() => fn(...args), wait);
+    };
+  };
 
-  function userRef(uid) {
-    return db.collection("users").doc(uid);
-  }
-
-  function escapeHtml(text) {
-    return String(text || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
-  function cleanupFollowListListener() {
-    if (typeof unsubFollowList === "function") {
-      unsubFollowList();
-      unsubFollowList = null;
-    }
-  }
-
-  function firstNonEmpty(...values) {
-    for (const v of values) {
-      if (typeof v === "string" && v.trim()) return v.trim();
-    }
-    return "";
-  }
-
-  function getBestName(data = {}, fallback = {}) {
-    return firstNonEmpty(
-      data.name,
-      data.fullName,
-      data.displayName,
-      data.display_name,
-      data.userName,
-      data.username,
-      data.nickName,
-      data.nickname,
-      data.profileName,
-      data.realName,
-      data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : "",
-      data.first_name && data.last_name ? `${data.first_name} ${data.last_name}` : "",
-      data.firstName,
-      data.lastName,
-      data.first_name,
-      data.last_name,
-
-      fallback.name,
-      fallback.fullName,
-      fallback.displayName,
-      fallback.display_name,
-      fallback.userName,
-      fallback.username,
-      fallback.nickName,
-      fallback.nickname,
-      fallback.profileName,
-      fallback.realName,
-      fallback.firstName && fallback.lastName ? `${fallback.firstName} ${fallback.lastName}` : "",
-      fallback.first_name && fallback.last_name ? `${fallback.first_name} ${fallback.last_name}` : "",
-      fallback.firstName,
-      fallback.lastName,
-      fallback.first_name,
-      fallback.last_name
-    );
-  }
-
-  function getBestPhoto(data = {}, fallback = {}) {
-    return firstNonEmpty(
-      data.photoURL,
-      data.profilePic,
-      data.avatar,
-      data.photo,
-      data.image,
-      data.profileImage,
-      data.picture,
-
-      fallback.photoURL,
-      fallback.profilePic,
-      fallback.avatar,
-      fallback.photo,
-      fallback.image,
-      fallback.profileImage,
-      fallback.picture,
-
-      DEFAULT_AVATAR
-    );
-  }
+  // uid -> { verified, profilePic, title, fullName }
+  const USER_META_CACHE = new Map();
 
   function badgeHTML(uid) {
     return `
-      <span class="verified-badge"
-            data-verified-uid="${escapeHtml(uid)}"
-            title="Verified"
-            style="display:none;">
+      <span class="verified-badge" data-uid="${esc(uid)}" title="Verified" style="display:none;">
         <svg class="verified-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M12 2l2.09 2.09 2.96-.39 1.2 2.73 2.73 1.2-.39 2.96L22 12l-2.09 2.09.39 2.96-2.73 1.2-1.2 2.73-2.96-.39L12 22l-2.09-2.09-2.96.39-1.2-2.73-2.73-1.2.39-2.96L2 12l2.09-2.09-.39-2.96 2.73-1.2 1.2-2.73 2.96.39L12 2z"
-            fill="#ff1f1f"
-          />
-          <path
-            d="M9.3 12.6l1.9 1.9 4.2-4.3"
-            fill="none"
-            stroke="#ffffff"
-            stroke-width="2.6"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
+          <path d="M12 2l2.09 2.09 2.96-.39 1.2 2.73 2.73 1.2-.39 2.96L22 12l-2.09 2.09.39 2.96-2.73 1.2-1.2 2.73-2.96-.39L12 22l-2.09-2.09-2.96.39-1.2-2.73-2.73-1.2.39-2.96L2 12l2.09-2.09-.39-2.96 2.73-1.2 1.2-2.73 2.96.39L12 2z" fill="#ff1f1f"/>
+          <path d="M9.3 12.6l1.9 1.9 4.2-4.3" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </span>
     `;
   }
 
-  async function getProfileName(profileUid) {
-    try {
-      const doc = await userRef(profileUid).get();
-      if (doc.exists) {
-        const data = doc.data() || {};
-        const name = getBestName(data);
-        if (name) return name;
-      }
-    } catch (err) {
-      console.error("Failed to load profile name:", err);
-    }
-
-    return firstNonEmpty(document.getElementById("profileName")?.textContent) || "User";
+  function setEmpty(resultsList, text) {
+    resultsList.innerHTML = `<div class="empty-state">${esc(text)}</div>`;
   }
 
-  async function getUserInfo(uid, fallback = {}) {
-    try {
-      const doc = await userRef(uid).get();
-
-      if (doc.exists) {
-        const data = doc.data() || {};
-        return {
-          uid,
-          name: getBestName(data, fallback) || "User",
-          photo: getBestPhoto(data, fallback) || DEFAULT_AVATAR
-        };
-      }
-    } catch (err) {
-      console.error("Failed to load user info:", uid, err);
-    }
-
-    return {
-      uid,
-      name: getBestName({}, fallback) || "User",
-      photo: getBestPhoto({}, fallback) || DEFAULT_AVATAR
-    };
+  function renderLoading(resultsList) {
+    resultsList.innerHTML = Array.from({ length: 7 }).map(() => `
+      <div class="srow" style="cursor:default; opacity:.7;">
+        <div style="width:44px;height:44px;border-radius:50%;background:#eee;"></div>
+        <div class="meta" style="flex:1;">
+          <div style="height:12px;width:170px;background:#eee;border-radius:6px;"></div>
+          <div style="height:10px;width:130px;background:#eee;border-radius:6px;margin-top:8px;"></div>
+        </div>
+      </div>
+    `).join("");
   }
 
-  function setActiveTab(tab) {
-    const followersTabBtn = document.getElementById("followersTabBtn");
-    const followingTabBtn = document.getElementById("followingTabBtn");
+  function normalizeHit(h) {
+    const uid = (h.objectID || h.uid || h.userUid || h.userId || "").toString().trim();
+    const fullName = (
+      (h.fullName || h.name || [h.firstName, h.lastName].filter(Boolean).join(" "))
+    ).toString().trim() || "User";
 
-    followersTabBtn?.classList.toggle("active", tab === "followers");
-    followingTabBtn?.classList.toggle("active", tab === "following");
+    const photo = (h.profilePic || h.photo || h.userPhoto || "").toString().trim();
+    // optional, final title will come from Firestore anyway
+    const title = (h.title || h.bioTitle || h.tagline || h.role || h.userId || "").toString().trim();
+
+    return { uid, fullName, photo, title };
   }
 
-  function openFollowPageUI() {
-    document.getElementById("followPage")?.classList.remove("hidden");
-  }
+  async function warmUserMeta(uids) {
+    const need = Array.from(new Set((uids || []).filter(Boolean)))
+      .filter(uid => !USER_META_CACHE.has(uid));
 
-  function closeFollowPageUI() {
-    document.getElementById("followPage")?.classList.add("hidden");
-    cleanupFollowListListener();
-  }
+    if (!need.length) return;
 
-  function openUserProfile(uid) {
-    if (!uid) return;
+    const snaps = await Promise.all(
+      need.map(uid => db.collection("users").doc(uid).get().catch(() => null))
+    );
 
-    closeFollowPageUI();
+    snaps.forEach((snap, i) => {
+      const uid = need[i];
+      const d = (snap && snap.exists) ? (snap.data() || {}) : {};
 
-    if (typeof window.cacheUserHeader === "function") {
-      const row = document.querySelector(`.follow-user-row[data-uid="${CSS.escape(uid)}"]`);
-      const name =
-        row?.querySelector(".follow-user-name")?.textContent?.trim() || "User";
-      const photo =
-        row?.querySelector(".follow-user-avatar")?.getAttribute("src") || DEFAULT_AVATAR;
+      const fullName =
+        [d.firstName, d.lastName].filter(Boolean).join(" ").trim() ||
+        d.fullName ||
+        d.name ||
+        "User";
 
-      window.cacheUserHeader(uid, { name, photo });
-    }
+      const meta = {
+        verified: d.verified === true,
+        profilePic: (d.profilePic || d.photoURL || d.photo || "").toString().trim(),
+        // ✅ title priority: title / bioTitle / tagline / role / userId
+        title: (d.title || d.bioTitle || d.tagline || d.role || d.userId || "").toString().trim(),
+        fullName
+      };
 
-    if (typeof window.openUserProfile === "function") {
-      window.openUserProfile(uid);
-      return;
-    }
-
-    if (typeof window.loadUserProfileByUid === "function") {
-      window.loadUserProfileByUid(uid);
-      return;
-    }
-
-    if (typeof window.openProfilePage === "function") {
-      window.openProfilePage(uid);
-      return;
-    }
-
-    if (typeof window.renderUserProfile === "function") {
-      if (typeof window.gotoPage === "function") window.gotoPage("profile");
-      window.renderUserProfile(uid);
-      return;
-    }
-
-    if (typeof window.showProfilePage === "function") {
-      window.showProfilePage(uid);
-      return;
-    }
-
-    if (typeof window.gotoProfile === "function") {
-      window.gotoProfile(uid);
-      return;
-    }
-
-    console.log("Open profile:", uid);
-  }
-
-  function setFollowListLoading() {
-    const list = document.getElementById("followUsersList");
-    if (list) list.innerHTML = `<div class="follow-loading">Loading...</div>`;
-  }
-
-  function setFollowListEmpty(type) {
-    const list = document.getElementById("followUsersList");
-    if (list) list.innerHTML = `<div class="follow-empty">No ${type} found</div>`;
-  }
-
-  function setFollowListError(type) {
-    const list = document.getElementById("followUsersList");
-    if (list) list.innerHTML = `<div class="follow-error">Failed to load ${type}</div>`;
-  }
-
-  function bindUserRowClicks() {
-    const list = document.getElementById("followUsersList");
-    if (!list) return;
-
-    list.querySelectorAll(".follow-user-row").forEach((row) => {
-      if (row.dataset.bound === "1") return;
-      row.dataset.bound = "1";
-      row.style.cursor = "pointer";
-
-      row.addEventListener("click", () => {
-        const uid = row.dataset.uid;
-        if (!uid) return;
-        openUserProfile(uid);
-      });
+      USER_META_CACHE.set(uid, meta);
     });
   }
 
-  function hydrateFollowListVerifiedBadges() {
-    if (typeof VERIFIED_CACHE !== "undefined" && VERIFIED_CACHE?.clear) {
-      VERIFIED_CACHE.clear();
+  function applyMetaToRow(rowEl, uid) {
+    const meta = USER_META_CACHE.get(uid);
+    if (!meta) return;
+
+    // name
+    const nameEl = rowEl.querySelector(".ntext");
+    if (nameEl && meta.fullName) nameEl.textContent = meta.fullName;
+
+    // photo
+    const img = rowEl.querySelector("img");
+    if (img) img.src = (meta.profilePic || rowEl.dataset.photo || FALLBACK_AVATAR);
+
+    // ✅ title line uses existing .uid class (so your CSS shows it)
+    const titleEl = rowEl.querySelector(".uid");
+    if (titleEl) {
+      const t = meta.title || "";
+      titleEl.textContent = t;
+      titleEl.style.display = t ? "block" : "none";
     }
 
-    if (typeof hydrateVerifiedBadges === "function") {
-      hydrateVerifiedBadges();
-    }
+    // badge
+    const badge = rowEl.querySelector(".verified-badge");
+    if (badge) badge.style.display = meta.verified ? "inline-flex" : "none";
+
+    // dataset for instant open
+    rowEl.dataset.name = meta.fullName || rowEl.dataset.name || "User";
+    rowEl.dataset.photo = meta.profilePic || rowEl.dataset.photo || FALLBACK_AVATAR;
   }
 
-  async function renderFollowList(profileUid, type = "followers") {
-    const pageName = document.getElementById("followPageName");
-    const countTitle = document.getElementById("followCountTitle");
-    const list = document.getElementById("followUsersList");
+  async function hydrateRenderedRows(resultsList) {
+    const rows = Array.from(resultsList.querySelectorAll(".srow[data-uid]"));
+    const uids = rows.map(r => (r.dataset.uid || "").trim()).filter(Boolean);
 
-    if (!pageName || !countTitle || !list || !profileUid) return;
-
-    currentProfileUid = profileUid;
-
-    setActiveTab(type);
-    openFollowPageUI();
-    setFollowListLoading();
-
-    const profileName = await getProfileName(profileUid);
-    pageName.textContent = profileName || "User";
-
-    cleanupFollowListListener();
-
-    try {
-      unsubFollowList = userRef(profileUid)
-        .collection(type)
-        .orderBy("createdAt", "desc")
-        .onSnapshot(
-          async (snap) => {
-            countTitle.textContent = `${snap.size} ${type}`;
-
-            if (snap.empty) {
-              setFollowListEmpty(type);
-              return;
-            }
-
-            try {
-              const items = await Promise.all(
-                snap.docs.map(async (doc) => {
-                  const data = doc.data() || {};
-                  const uid = data.userId || doc.id;
-                  const user = await getUserInfo(uid, data);
-
-                  return `
-                    <div class="follow-user-row" data-uid="${escapeHtml(user.uid)}">
-                      <img
-                        class="follow-user-avatar"
-                        src="${escapeHtml(user.photo)}"
-                        alt="${escapeHtml(user.name)}"
-                        onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}';"
-                      />
-                      <div class="follow-user-meta">
-                        <div class="follow-user-name-wrap">
-                          <span class="follow-user-name">${escapeHtml(user.name || "User")}</span>
-                          ${badgeHTML(user.uid)}
-                        </div>
-                      </div>
-                    </div>
-                  `;
-                })
-              );
-
-              list.innerHTML = items.join("");
-              bindUserRowClicks();
-              hydrateFollowListVerifiedBadges();
-            } catch (err) {
-              console.error("Render follow list error:", err);
-              setFollowListError(type);
-            }
-          },
-          (err) => {
-            console.error("Follow list snapshot error:", err);
-            setFollowListError(type);
-          }
-        );
-    } catch (err) {
-      console.error("Follow list load error:", err);
-      setFollowListError(type);
-    }
+    await warmUserMeta(uids);
+    rows.forEach(r => applyMetaToRow(r, (r.dataset.uid || "").trim()));
   }
 
-  function bindFollowPageEvents() {
-    const backBtn = document.getElementById("followBackBtn");
-    const followersTabBtn = document.getElementById("followersTabBtn");
-    const followingTabBtn = document.getElementById("followingTabBtn");
+  document.addEventListener("DOMContentLoaded", () => {
+    const searchIcon = document.getElementById("searchIcon");
+    const searchOverlay = document.getElementById("searchOverlay");
+    const searchInput = document.getElementById("searchInput");
+    const searchClearBtn = document.getElementById("searchClearBtn");
+    const resultsList = document.getElementById("searchResultsList");
+    const searchBackBtn = document.getElementById("searchBackBtn");
 
-    if (backBtn && !backBtn.dataset.bound) {
-      backBtn.dataset.bound = "1";
-      backBtn.onclick = closeFollowPageUI;
+    if (!searchIcon || !searchOverlay || !searchInput || !searchClearBtn || !resultsList || !searchBackBtn) {
+      console.warn("Search UI elements missing. Check IDs.");
+      return;
     }
 
-    if (followersTabBtn && !followersTabBtn.dataset.bound) {
-      followersTabBtn.dataset.bound = "1";
-      followersTabBtn.onclick = () => {
-        if (!currentProfileUid) return;
-        renderFollowList(currentProfileUid, "followers");
-      };
+    if (typeof algoliasearch !== "function") {
+      console.error("Algolia CDN not loaded. Add algoliasearch script tag before this JS.");
+      return;
     }
 
-    if (followingTabBtn && !followingTabBtn.dataset.bound) {
-      followingTabBtn.dataset.bound = "1";
-      followingTabBtn.onclick = () => {
-        if (!currentProfileUid) return;
-        renderFollowList(currentProfileUid, "following");
-      };
-    }
-  }
+    const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_SEARCH_KEY);
+    const index = client.initIndex(ALGOLIA_INDEX);
 
-  function attachFollowButtons(profileUid) {
-    const followersBtn = document.getElementById("followersBtn");
-    const followingBtn = document.getElementById("followingBtn");
+    const openSearch = () => {
+      searchOverlay.style.display = "flex";
+      searchOverlay.setAttribute("aria-hidden", "false");
+      document.body.classList.add("search-open");
 
-    if (followersBtn) {
-      followersBtn.onclick = () => renderFollowList(profileUid, "followers");
-    }
+      history.pushState({searchOpen:true}, "", "#search");
 
-    if (followingBtn) {
-      followingBtn.onclick = () => renderFollowList(profileUid, "following");
-    }
-  }
-
-  function patchSetProfileActionsForUid() {
-    if (typeof window.setProfileActionsForUid !== "function") return;
-    if (window.__followPagePatched) return;
-
-    window.__followPagePatched = true;
-
-    const original = window.setProfileActionsForUid;
-
-    window.setProfileActionsForUid = function (profileUid) {
-      bindFollowPageEvents();
-      attachFollowButtons(profileUid);
-
-      const cleanup = original.apply(this, arguments);
-
-      return function () {
-        cleanupFollowListListener();
-        if (typeof cleanup === "function") cleanup();
-      };
+      searchInput.value = "";
+      setEmpty(resultsList, "Type to search users");
+      setTimeout(() => searchInput.focus(), 10);
     };
-  }
 
-  function initFollowPageModule() {
-    bindFollowPageEvents();
-    patchSetProfileActionsForUid();
-  }
+    const closeSearch = () => {
+      searchOverlay.style.display = "none";
+      searchOverlay.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("search-open");
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initFollowPageModule);
-  } else {
-    initFollowPageModule();
-  }
+      searchInput.value = "";
+      resultsList.innerHTML = "";
+    };
 
-  window.__openFollowPage = renderFollowList;
-  window.__closeFollowPage = closeFollowPageUI;
-  window.__openUserProfileFromFollowList = openUserProfile;
+    const renderResults = async (hits) => {
+      if (!hits || !hits.length) {
+        setEmpty(resultsList, "users not found");
+        return;
+      }
+
+      const rows = hits.map(normalizeHit).filter(x => x.uid);
+
+      // instant paint (title uses .uid class)
+      resultsList.innerHTML = rows.map(r => `
+        <div class="srow"
+             data-uid="${esc(r.uid)}"
+             data-name="${esc(r.fullName)}"
+             data-photo="${esc(r.photo || FALLBACK_AVATAR)}">
+          <img src="${esc(r.photo || FALLBACK_AVATAR)}"
+               loading="lazy"
+               decoding="async"
+               onerror="this.onerror=null;this.src='${FALLBACK_AVATAR}';" />
+
+          <div class="meta">
+            <div class="name" style="display:flex;align-items:center;gap:6px;">
+              <span class="ntext">${esc(r.fullName)}</span>
+              ${badgeHTML(r.uid)}
+            </div>
+
+            <!-- ✅ title line (same class .uid that your UI already supports) -->
+            <div class="uid" style="${r.title ? "display:block" : "display:none"}">
+              ${esc(r.title || "")}
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+      // hydrate from Firestore (guarantee title/verified/pic)
+      await hydrateRenderedRows(resultsList);
+    };
+
+    const doSearch = debounce(async () => {
+      const q = (searchInput.value || "").trim();
+      if (!q) {
+        setEmpty(resultsList, "Type to search users");
+        return;
+      }
+
+      renderLoading(resultsList);
+
+      try {
+        const res = await index.search(q, { hitsPerPage: 20 });
+        await renderResults(res.hits || []);
+      } catch (e) {
+        console.error("Algolia search error:", e);
+        setEmpty(resultsList, "Search failed");
+      }
+    }, 180);
+
+    // events
+    searchIcon.addEventListener("click", (e) => {
+      e.preventDefault();
+      openSearch();
+    });
+
+    searchBackBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeSearch();
+    });
+
+    searchClearBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      searchInput.value = "";
+      searchInput.focus();
+      setEmpty(resultsList, "Type to search users");
+    });
+
+    searchInput.addEventListener("input", doSearch);
+
+    // click -> open profile
+    resultsList.addEventListener("click", (e) => {
+      const row = e.target.closest(".srow[data-uid]");
+      if (!row) return;
+
+      const uid = (row.dataset.uid || "").trim();
+      if (!uid) return;
+
+      const name = (row.dataset.name || "User").trim() || "User";
+      const photo = (row.dataset.photo || "").trim() || FALLBACK_AVATAR;
+
+      closeSearch();
+
+      if (typeof cacheUserHeader === "function") cacheUserHeader(uid, { name, photo });
+      if (typeof openUserProfile === "function") openUserProfile(uid, { name, photo });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && searchOverlay.style.display === "flex") closeSearch();
+    });
+
+    setEmpty(resultsList, "Type to search users");
+  });
 })();
+
+
+
+window.addEventListener("popstate", function () {
+
+  if (searchOverlay && searchOverlay.style.display === "flex") {
+
+    searchOverlay.style.display = "none";
+    searchOverlay.setAttribute("aria-hidden","true");
+    document.body.classList.remove("search-open");
+
+  }
+
+});
 //privecy policy//
 document.addEventListener("DOMContentLoaded", function(){
 
@@ -6613,7 +6470,6 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 })();
 
-
 //signup model to login model//
 document.addEventListener("DOMContentLoaded", function () {
   const authModal = document.getElementById("authModal");
@@ -6922,7 +6778,6 @@ const EditPostModule = (() => {
     close
   };
 })();
-
 
 //followers follwing section//
 (() => {
