@@ -1799,6 +1799,13 @@ document.addEventListener("click", (e) => {
         createdAt: Date.now()
       });
 
+  // 🔔 Notification send
+   NotificationSystem.notifyReaction(postId, {
+    uid: uid,
+    userName: userName,
+   userPhoto: userPhoto
+   });
+
     } catch (err) {
       console.error(err);
     }
@@ -3808,6 +3815,9 @@ async function addCommentToPost(postId, text){
       likeCount: 0,
       likedBy: {}
     });
+
+   // 🔔 COMMENT NOTIFICATION
+await NotificationSystem.sendCommentNotification(postId);
 }
 
 // FIX: Post button
@@ -7248,4 +7258,363 @@ const EditPostModule = (() => {
   window.__openFollowPage = renderFollowList;
   window.__closeFollowPage = closeFollowPageUI;
   window.__openUserProfileFromFollowList = openUserProfile;
+})();
+
+
+//notification section//
+/* ================= NOTIFICATION SYSTEM (FINAL CLEAN REPLACE) ================= */
+(() => {
+  if (window.EverestNotificationSystemLoaded) return;
+  window.EverestNotificationSystemLoaded = true;
+
+  const DEFAULT_AVATAR = "https://i.imgur.com/6VBx3io.png";
+  let NOTIF_UNSUB = null;
+
+  function safeText(s) {
+    return String(s || "").replace(/[<>]/g, "");
+  }
+
+  function timeAgo(ts) {
+    const n = Number(ts || 0);
+    if (!n) return "";
+    const diff = Math.max(1, Math.floor((Date.now() - n) / 1000));
+
+    if (diff < 60) return `${diff}s`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+    return `${Math.floor(diff / 86400)}d`;
+  }
+
+  async function getActorMeta() {
+    if (!auth.currentUser) return null;
+
+    const uid = auth.currentUser.uid;
+
+    try {
+      if (typeof getMyUserMeta === "function") {
+        const me = await getMyUserMeta();
+        return {
+          uid,
+          userName: me?.userName || "User",
+          userPhoto: me?.userPhoto || ""
+        };
+      }
+    } catch (err) {
+      console.warn("getMyUserMeta failed, fallback used", err);
+    }
+
+    try {
+      const us = await db.collection("users").doc(uid).get();
+      const d = us.exists ? (us.data() || {}) : {};
+      return {
+        uid,
+        userName: [d.firstName, d.lastName].filter(Boolean).join(" ").trim() || "User",
+        userPhoto: d.profilePic || ""
+      };
+    } catch (err) {
+      console.error("getActorMeta error:", err);
+      return {
+        uid,
+        userName: "User",
+        userPhoto: ""
+      };
+    }
+  }
+
+  async function getPostOwnerId(postId) {
+    if (!postId) return "";
+
+    try {
+      const snap = await db.collection("posts").doc(postId).get();
+      if (!snap.exists) return "";
+      const d = snap.data() || {};
+      return d.userId || "";
+    } catch (err) {
+      console.error("getPostOwnerId error:", err);
+      return "";
+    }
+  }
+
+  async function createNotification({ toUserId, fromUserId, fromUserName, fromUserPhoto, type, postId, text, docId = null }) {
+    try {
+      if (!toUserId || !fromUserId || !postId) return;
+      if (toUserId === fromUserId) return;
+
+      const payload = {
+        toUserId,
+        fromUserId,
+        fromUserName: fromUserName || "User",
+        fromUserPhoto: fromUserPhoto || "",
+        type: type || "",
+        postId: postId || "",
+        text: text || "",
+        seen: false,
+        createdAt: Date.now()
+      };
+
+      if (docId) {
+        await db.collection("notifications").doc(docId).set(payload, { merge: true });
+      } else {
+        await db.collection("notifications").add(payload);
+      }
+    } catch (err) {
+      console.error("createNotification error:", err);
+    }
+  }
+
+  async function sendReactionNotification(postId) {
+    if (!auth.currentUser || !postId) return;
+
+    try {
+      const actor = await getActorMeta();
+      if (!actor?.uid) return;
+
+      const ownerId = await getPostOwnerId(postId);
+      if (!ownerId || ownerId === actor.uid) return;
+
+      // same user same post reaction => one notification doc
+      const docId = `reaction_${postId}_${actor.uid}`;
+
+      await createNotification({
+        toUserId: ownerId,
+        fromUserId: actor.uid,
+        fromUserName: actor.userName,
+        fromUserPhoto: actor.userPhoto,
+        type: "reaction",
+        postId,
+        text: "reacted to your post",
+        docId
+      });
+    } catch (err) {
+      console.error("sendReactionNotification error:", err);
+    }
+  }
+
+  async function sendCommentNotification(postId) {
+    if (!auth.currentUser || !postId) return;
+
+    try {
+      const actor = await getActorMeta();
+      if (!actor?.uid) return;
+
+      const ownerId = await getPostOwnerId(postId);
+      if (!ownerId || ownerId === actor.uid) return;
+
+      await createNotification({
+        toUserId: ownerId,
+        fromUserId: actor.uid,
+        fromUserName: actor.userName,
+        fromUserPhoto: actor.userPhoto,
+        type: "comment",
+        postId,
+        text: "commented on your post"
+      });
+    } catch (err) {
+      console.error("sendCommentNotification error:", err);
+    }
+  }
+
+  function renderNotificationItem(docId, n) {
+    const photo = n.fromUserPhoto || DEFAULT_AVATAR;
+    const name = safeText(n.fromUserName || "User");
+    const text = safeText(n.text || "");
+    const ago = timeAgo(n.createdAt);
+
+    return `
+      <div class="notification-item ${n.seen ? "" : "notif-unread"}"
+           data-id="${docId}"
+           data-post-id="${n.postId || ""}"
+           style="display:flex;gap:10px;align-items:flex-start;padding:12px;border-bottom:1px solid #eee;cursor:pointer;">
+        <img
+          src="${photo}"
+          onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}';"
+          style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex:0 0 44px;"
+        />
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;line-height:1.35;color:#111;">
+            <strong>${name}</strong> ${text}
+          </div>
+          <div style="margin-top:4px;font-size:12px;color:#777;">${ago}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderEmptyState() {
+    return `
+      <div style="padding:18px;text-align:center;color:#777;">
+        No notifications yet
+      </div>
+    `;
+  }
+
+  function startNotificationListener() {
+    if (!auth.currentUser) return;
+
+    const list = document.getElementById("notificationList");
+    if (!list) return;
+
+    if (NOTIF_UNSUB) {
+      try { NOTIF_UNSUB(); } catch (e) {}
+      NOTIF_UNSUB = null;
+    }
+
+    NOTIF_UNSUB = db.collection("notifications")
+      .where("toUserId", "==", auth.currentUser.uid)
+      .orderBy("createdAt", "desc")
+      .limit(50)
+      .onSnapshot((snap) => {
+        if (!list) return;
+
+        if (snap.empty) {
+          list.innerHTML = renderEmptyState();
+          return;
+        }
+
+        list.innerHTML = "";
+        snap.forEach((doc) => {
+          const n = doc.data() || {};
+          list.insertAdjacentHTML("beforeend", renderNotificationItem(doc.id, n));
+        });
+      }, (err) => {
+        console.error("notification listener error:", err);
+      });
+  }
+
+  function stopNotificationListener() {
+    if (NOTIF_UNSUB) {
+      try { NOTIF_UNSUB(); } catch (e) {}
+      NOTIF_UNSUB = null;
+    }
+  }
+
+  function markSeen(docId) {
+    if (!docId) return;
+    db.collection("notifications").doc(docId).update({
+      seen: true
+    }).catch(() => {});
+  }
+
+  function setupNotificationClick() {
+    document.addEventListener("click", (e) => {
+      const item = e.target.closest(".notification-item[data-id]");
+      if (!item) return;
+
+      const docId = item.dataset.id;
+      const postId = item.dataset.postId || "";
+
+      markSeen(docId);
+
+      if (postId) {
+        const baseUrl = window.location.href.split("#")[0];
+        window.location.href = `${baseUrl}#post=${encodeURIComponent(postId)}`;
+      }
+    });
+  }
+
+  /* ===== COMMENT PATCH ===== */
+  function patchAddCommentToPost() {
+    if (typeof addCommentToPost !== "function") {
+      console.warn("NotificationSystem: addCommentToPost not found");
+      return;
+    }
+
+    if (addCommentToPost.__notifPatched) return;
+
+    const originalAddComment = addCommentToPost;
+
+    window.addCommentToPost = async function(postId, text) {
+      const clean = String(text || "").trim();
+      const result = await originalAddComment.apply(this, arguments);
+
+      try {
+        if (clean) {
+          await sendCommentNotification(postId);
+        }
+      } catch (err) {
+        console.error("patched comment notification error:", err);
+      }
+
+      return result;
+    };
+
+    window.addCommentToPost.__notifPatched = true;
+    console.log("NotificationSystem: addCommentToPost patched");
+  }
+
+  /* ===== REACTION PATCH ===== */
+  function setupReactionHooks() {
+    // emoji reaction click
+    document.addEventListener("click", (e) => {
+      const emojiEl = e.target.closest(".reaction-box span");
+      if (!emojiEl) return;
+      if (!auth.currentUser) return;
+
+      const postEl = emojiEl.closest(".post");
+      const postId = postEl?.dataset?.id;
+      if (!postId) return;
+
+      setTimeout(() => {
+        sendReactionNotification(postId);
+      }, 300);
+    }, true);
+
+    // normal like click
+    document.addEventListener("click", (e) => {
+      const likeBtn = e.target.closest(".like-btn");
+      if (!likeBtn) return;
+      if (e.target.closest(".reaction-box")) return;
+      if (!auth.currentUser) return;
+
+      const postEl = likeBtn.closest(".post");
+      const postId = postEl?.dataset?.id;
+      if (!postId) return;
+
+      setTimeout(async () => {
+        try {
+          const uid = auth.currentUser.uid;
+          const snap = await db.collection("posts")
+            .doc(postId)
+            .collection("reactions")
+            .doc(uid)
+            .get();
+
+          if (snap.exists) {
+            await sendReactionNotification(postId);
+          }
+        } catch (err) {
+          console.error("normal like notification error:", err);
+        }
+      }, 450);
+    }, true);
+  }
+
+  function authBoot() {
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        startNotificationListener();
+      } else {
+        stopNotificationListener();
+        const list = document.getElementById("notificationList");
+        if (list) list.innerHTML = renderEmptyState();
+      }
+    });
+  }
+
+  function init() {
+    patchAddCommentToPost();
+    setupReactionHooks();
+    setupNotificationClick();
+    authBoot();
+    console.log("NotificationSystem ready");
+  }
+
+  init();
+
+  window.NotificationSystem = {
+    startNotificationListener,
+    stopNotificationListener,
+    sendReactionNotification,
+    sendCommentNotification
+  };
 })();
