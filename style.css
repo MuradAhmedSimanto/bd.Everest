@@ -2319,17 +2319,31 @@ body.profile-mode #bioText{
 }
 
 /* title */
-#changeNameModal .change-title,
-#changeNameModal h2,
-#changeNameModal h3,
-#changeNameModal .modal-title,
-#changeNameModal .auth-title {
-  margin: 0 0 12px;
-  text-align: center;
-  font-size: 22px;
+#changeNameModal .brand-header{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+#changeNameModal .brand-logo{
+  width: 78px;
+  height: 78px;
+  object-fit: contain;
+  margin-top: 8px;   /* একটু নিচে */
+  flex-shrink: 0;
+}
+
+#changeNameModal .brand-text{
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 34px;
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1;
   color: #111;
+  letter-spacing: 0.5px;
+  transform: translateX(-10px); /* logo এর কাছে আনবে */
 }
 
 /* description */
@@ -5434,3 +5448,29 @@ to{transform:rotate(360deg)}
   border:none !important;
   padding:2px !important;
 }
+
+/*E ologo*/
+.brand-header{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0; 
+}
+
+.brand-logo{
+  width:90px;
+  height:75px;
+  object-fit:contain;
+  margin-top:10px;
+}
+
+.brand-text{
+  font-family: 'Poppins', sans-serif;
+  font-size:44px;
+  font-weight:800;
+  margin:0;
+  color:#111; 
+  transform: translateX(-15px);
+  letter-spacing:1px; 
+}
+
